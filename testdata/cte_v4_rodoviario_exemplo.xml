@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Synthetic (fictitious) CT-e v4.00, modelo 57 (CT-e normal), modal Rodoviário, used as this
+  library's test/sample document. No such XML exists anywhere in the provided ACBrCTe source tree
+  (confirmed via search - ACBr ships no sample/test CT-e XML), so this file was authored from the
+  official CT-e 4.00 schema plus the field usages documented in analysis/cte_model.md and
+  analysis/xml_mapping.md. All parties, keys, and values are fictitious.
+-->
+<cteProc xmlns="http://www.portalfiscal.inf.br/cte" versao="4.00">
+  <CTe>
+    <infCTe Id="CTe35240512345678000112570010000000011234567890" versao="4.00">
+      <ide>
+        <cUF>35</cUF>
+        <cCT>12345678</cCT>
+        <CFOP>6353</CFOP>
+        <natOp>Prestacao de servico de transporte</natOp>
+        <mod>57</mod>
+        <serie>1</serie>
+        <nCT>11</nCT>
+        <dhEmi>2026-08-20T10:30:00-03:00</dhEmi>
+        <tpImp>1</tpImp>
+        <tpEmis>1</tpEmis>
+        <cDV>0</cDV>
+        <tpAmb>2</tpAmb>
+        <tpCTe>0</tpCTe>
+        <procEmi>0</procEmi>
+        <verProc>DacteNet 1.0</verProc>
+        <indGlobalizado>0</indGlobalizado>
+        <cMunEnv>3550308</cMunEnv>
+        <xMunEnv>Sao Paulo</xMunEnv>
+        <UFEnv>SP</UFEnv>
+        <modal>01</modal>
+        <tpServ>0</tpServ>
+        <cMunIni>3550308</cMunIni>
+        <xMunIni>Sao Paulo</xMunIni>
+        <UFIni>SP</UFIni>
+        <cMunFim>3304557</cMunFim>
+        <xMunFim>Rio de Janeiro</xMunFim>
+        <UFFim>RJ</UFFim>
+        <retira>1</retira>
+        <indIEToma>1</indIEToma>
+        <toma03>
+          <toma>0</toma>
+        </toma03>
+      </ide>
+      <compl>
+        <xCaracAd>Carga geral</xCaracAd>
+        <xCaracSer>Entrega normal</xCaracSer>
+        <xObs>CT-e de exemplo gerado apenas para teste da biblioteca DacteNet.</xObs>
+        <ObsCont xCampo="Referencia">
+          <xTexto>Pedido 000123</xTexto>
+        </ObsCont>
+      </compl>
+      <emit>
+        <CNPJ>12345678000199</CNPJ>
+        <IE>110042490114</IE>
+        <xNome>Transportadora Exemplo Ltda</xNome>
+        <xFant>Exemplo Transportes</xFant>
+        <enderEmit>
+          <xLgr>Rua das Transportadoras</xLgr>
+          <nro>1000</nro>
+          <xBairro>Vila Industrial</xBairro>
+          <cMun>3550308</cMun>
+          <xMun>Sao Paulo</xMun>
+          <CEP>03310000</CEP>
+          <UF>SP</UF>
+          <fone>1133334444</fone>
+        </enderEmit>
+        <CRT>3</CRT>
+      </emit>
+      <rem>
+        <CNPJ>11222333000181</CNPJ>
+        <IE>111111111111</IE>
+        <xNome>Industria Remetente S.A.</xNome>
+        <fone>1122223333</fone>
+        <enderReme>
+          <xLgr>Avenida Industrial</xLgr>
+          <nro>500</nro>
+          <xBairro>Distrito Industrial</xBairro>
+          <cMun>3550308</cMun>
+          <xMun>Sao Paulo</xMun>
+          <CEP>04100000</CEP>
+          <UF>SP</UF>
+          <cPais>1058</cPais>
+          <xPais>Brasil</xPais>
+        </enderReme>
+      </rem>
+      <exped>
+        <CNPJ>11222333000181</CNPJ>
+        <IE>111111111111</IE>
+        <xNome>Industria Remetente S.A. - CD Expedicao</xNome>
+        <fone>1122223333</fone>
+        <enderExped>
+          <xLgr>Avenida Industrial</xLgr>
+          <nro>500</nro>
+          <xBairro>Distrito Industrial</xBairro>
+          <cMun>3550308</cMun>
+          <xMun>Sao Paulo</xMun>
+          <CEP>04100000</CEP>
+          <UF>SP</UF>
+          <xPais>Brasil</xPais>
+        </enderExped>
+      </exped>
+      <receb>
+        <CNPJ>99888777000166</CNPJ>
+        <IE>ISENTO</IE>
+        <xNome>Comercial Recebedora Ltda - Deposito RJ</xNome>
+        <fone>2144445555</fone>
+        <enderReceb>
+          <xLgr>Rodovia Presidente Dutra</xLgr>
+          <nro>2500</nro>
+          <xBairro>Deposito</xBairro>
+          <cMun>3304557</cMun>
+          <xMun>Rio de Janeiro</xMun>
+          <CEP>21000000</CEP>
+          <UF>RJ</UF>
+          <xPais>Brasil</xPais>
+        </enderReceb>
+      </receb>
+      <dest>
+        <CNPJ>99888777000166</CNPJ>
+        <IE>ISENTO</IE>
+        <ISUF></ISUF>
+        <xNome>Comercial Recebedora Ltda</xNome>
+        <fone>2144445555</fone>
+        <enderDest>
+          <xLgr>Rua do Comercio</xLgr>
+          <nro>200</nro>
+          <xBairro>Centro</xBairro>
+          <cMun>3304557</cMun>
+          <xMun>Rio de Janeiro</xMun>
+          <CEP>20000000</CEP>
+          <UF>RJ</UF>
+          <xPais>Brasil</xPais>
+        </enderDest>
+      </dest>
+      <vPrest>
+        <vTPrest>1250.00</vTPrest>
+        <vRec>1250.00</vRec>
+        <Comp>
+          <xNome>FRETE PESO</xNome>
+          <vComp>1000.00</vComp>
+        </Comp>
+        <Comp>
+          <xNome>ADEME</xNome>
+          <vComp>250.00</vComp>
+        </Comp>
+      </vPrest>
+      <imp>
+        <ICMS>
+          <ICMS00>
+            <CST>00</CST>
+            <vBC>1250.00</vBC>
+            <pICMS>12.00</pICMS>
+            <vICMS>150.00</vICMS>
+          </ICMS00>
+        </ICMS>
+        <vTotTrib>187.50</vTotTrib>
+      </imp>
+      <infCTeNorm>
+        <infCarga>
+          <vCarga>15000.00</vCarga>
+          <proPred>Autopecas</proPred>
+          <xOutCat>Carga seca, paletizada</xOutCat>
+          <infQ>
+            <cUnid>01</cUnid>
+            <tpMed>PESO BRUTO</tpMed>
+            <qCarga>1200.0000</qCarga>
+          </infQ>
+          <infQ>
+            <cUnid>01</cUnid>
+            <tpMed>PESO BASE DE CALCULO</tpMed>
+            <qCarga>1200.0000</qCarga>
+          </infQ>
+          <infQ>
+            <cUnid>00</cUnid>
+            <tpMed>CUBAGEM</tpMed>
+            <qCarga>3.5000</qCarga>
+          </infQ>
+          <infQ>
+            <cUnid>03</cUnid>
+            <tpMed>QTDE VOLUMES</tpMed>
+            <qCarga>25.0000</qCarga>
+          </infQ>
+        </infCarga>
+        <infDoc>
+          <infNF>
+            <serie>1</serie>
+            <nDoc>987654</nDoc>
+            <dEmi>2026-08-19</dEmi>
+            <vBC>15000.00</vBC>
+            <vICMS>1800.00</vICMS>
+            <vProd>15000.00</vProd>
+            <vNF>15000.00</vNF>
+            <nCFOP>6108</nCFOP>
+            <nPeso>1200.0000</nPeso>
+          </infNF>
+          <infNFe>
+            <chave>35240811222333000181550010000009871123456789</chave>
+          </infNFe>
+        </infDoc>
+        <seg>
+          <respSeg>0</respSeg>
+          <xSeg>Seguradora Exemplo S.A.</xSeg>
+          <nApol>AP-000123456</nApol>
+          <nAver>AV-000654321</nAver>
+          <vCarga>15000.00</vCarga>
+        </seg>
+        <rodo>
+          <RNTRC>12345678</RNTRC>
+          <dPrev>2026-08-22</dPrev>
+          <lota>0</lota>
+          <CIOT>12345678901</CIOT>
+          <veic>
+            <cInt>001</cInt>
+            <placa>ABC1D23</placa>
+            <RENAVAM>00123456789</RENAVAM>
+            <tpProp>0</tpProp>
+            <tpVeic>0</tpVeic>
+            <UF>SP</UF>
+            <prop>
+              <CNPJ>12345678000199</CNPJ>
+              <RNTRC>12345678</RNTRC>
+              <xNome>Transportadora Exemplo Ltda</xNome>
+              <UF>SP</UF>
+            </prop>
+          </veic>
+          <moto>
+            <xNome>Joao da Silva</xNome>
+            <CPF>12345678901</CPF>
+          </moto>
+        </rodo>
+      </infCTeNorm>
+      <infCTeSupl>
+        <qrCodCTe>https://dfe-portal.svrs.rs.gov.br/cte/qrcode?chCTe=35240512345678000112570010000000011234567890&amp;tpAmb=2</qrCodCTe>
+      </infCTeSupl>
+    </infCTe>
+  </CTe>
+  <protCTe versao="4.00">
+    <infProt>
+      <tpAmb>2</tpAmb>
+      <verAplic>SVRS_20260101</verAplic>
+      <chCTe>35240512345678000112570010000000011234567890</chCTe>
+      <dhRecbto>2026-08-20T10:31:05-03:00</dhRecbto>
+      <nProt>135260000123456</nProt>
+      <cStat>100</cStat>
+      <xMotivo>Autorizado o uso do CT-e</xMotivo>
+    </infProt>
+  </protCTe>
+</cteProc>
