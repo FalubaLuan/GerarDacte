@@ -33,13 +33,13 @@ public sealed partial class DacteA4Renderer
             canvas.Line(1, 14, 741, 14, 0.5);
             canvas.Line(370, 14, 370, h - 2, 0.5);
             canvas.Text(5, 17, 29, 8, "TP DOC.", F(5.25));
-            canvas.Text(88, 17, 69, 8, "CNPJ/CPF EMITENTE", F(5.25));
+            canvas.Text(52, 17, 69, 8, "NÚM. NOTA", F(5.25));
             canvas.Text(174, 17, 86, 8, "SÉRIE/NRO. DOCUMENTO", F(5.25));
             canvas.Text(373, 17, 29, 8, "TP DOC.", F(5.25));
-            canvas.Text(456, 17, 69, 8, "CNPJ/CPF EMITENTE", F(5.25));
+            canvas.Text(420, 17, 69, 8, "NÚM. NOTA", F(5.25));
             canvas.Text(542, 17, 86, 8, "SÉRIE/NRO. DOCUMENTO", F(5.25));
 
-            canvas.Memo(5, 27, 363, pageRows.Select(r => $"{r.Item1,-8}{r.Item2}"), F(6.75));
+            canvas.Memo(5, 27, 363, pageRows.Select(r => $"{r.Item1,-14}{r.Item2}"), F(6.75));
             canvas.Memo(373, 27, 363, pageRows.Select(r => string.IsNullOrEmpty(r.Item3) ? "" : $"{r.Item3,-8}{r.Item4}"), F(6.75));
 
             canvas.AdvanceBand(h);

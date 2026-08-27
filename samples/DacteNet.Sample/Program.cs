@@ -25,6 +25,7 @@ var a5Options = new DacteOptions
     TamanhoPapel = TamanhoPapel.A5,
     Sistema = "DacteNet Sample",
     Usuario = Environment.UserName,
+    
 };
 string a5OutputPath = Path.ChangeExtension(outputPath, null) + "_a5.pdf";
 new Dacte(a5Options).GerarPdf(xml, a5OutputPath);

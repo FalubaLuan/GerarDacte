@@ -116,7 +116,7 @@ public static class DacteViewModelBuilder
             }
         }
 
-        BuildDocumentosOriginarios(vm, infNormal, cte.Remetente, isOS);
+        BuildDocumentosOriginarios(vm, infNormal, isOS);
         BuildComplementoESubstituicao(vm, cte, ide, isOS);
         BuildModais(vm, infNormal, ide, versao, isOS);
         BuildObservacoesEFisco(vm, cte);
@@ -638,23 +638,23 @@ public static class DacteViewModelBuilder
     // Documentos originários (Itens/cdsDocumentos, retrato_layout.md §7)
     // ------------------------------------------------------------------
 
-    private static void BuildDocumentosOriginarios(DacteViewModel vm, InfoCTeNormal? infNormal, Remetente? rem, bool isOS)
+    private static void BuildDocumentosOriginarios(DacteViewModel vm, InfoCTeNormal? infNormal, bool isOS)
     {
         if (infNormal is null || isOS) return; // rlb_07_HeaderItens is disabled outright for modelo 67
 
         var doc = infNormal.DocumentosOriginarios;
-        var cnpjRem = Format.CnpjOuCpf(rem?.CnpjCpf); // see class remarks: inferred convention
+        var numNota = vm.NumeroCTe; // see class remarks: inferred convention
 
         var itens = new List<(string Tipo, string Cnpj, string Documento)>();
 
         foreach (var nf in doc.NotasFiscais)
-            itens.Add(("NF", cnpjRem, $"{nf.Serie}-{nf.Numero}"));
+            itens.Add(("NF", numNota, $"{nf.Serie}-{nf.Numero}"));
 
         foreach (var nfe in doc.NotasFiscaisEletronicas)
-            itens.Add(("NF-e", cnpjRem, Format.ChaveAcesso(nfe.Chave)));
+            itens.Add(("NF-e", numNota, Format.ChaveAcesso(nfe.Chave)));
 
         foreach (var outro in doc.Outros)
-            itens.Add((TipoDocumentoOutrosTexto(outro.Tipo), cnpjRem, outro.Numero ?? outro.DescricaoOutros ?? ""));
+            itens.Add((TipoDocumentoOutrosTexto(outro.Tipo), numNota, outro.Numero ?? outro.DescricaoOutros ?? ""));
 
         foreach (var emissor in infNormal.DocumentosAnteriores)
         {
@@ -670,7 +670,7 @@ public static class DacteViewModelBuilder
         {
             (string Tipo, string Cnpj, string Documento) col1 = itens[i];
             (string Tipo, string Cnpj, string Documento) col2 = i + 1 < itens.Count ? itens[i + 1] : ("", "", "");
-            linhas.Add((col1.Tipo, $"{col1.Cnpj} {col1.Documento}", col2.Tipo, string.IsNullOrEmpty(col2.Tipo) ? "" : $"{col2.Cnpj} {col2.Documento}"));
+            linhas.Add((col1.Tipo, $"{col1.Cnpj}       {col1.Documento}", col2.Tipo, string.IsNullOrEmpty(col2.Tipo) ? "" : $"{col2.Cnpj}       {col2.Documento}"));
         }
 
         vm.LinhasDocumentosOriginarios = linhas;

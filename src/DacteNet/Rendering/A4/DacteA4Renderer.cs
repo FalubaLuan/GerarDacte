@@ -96,7 +96,7 @@ public sealed partial class DacteA4Renderer
         canvas.Rect(0, 2, 741, 183);
 
         // --- left block: logo/issuer name+address ---
-        canvas.Text(7, 3, 305, 18, vm.Emitente.RazaoSocial, F(9, true), TextAlign.Center);
+        canvas.Text(7, 10, 305, 19, vm.Emitente.RazaoSocial, F(9, true), TextAlign.Center);
         canvas.Memo(7, 34, 305, vm.Emitente.LinhasEnderecoCompleto, F(6), lineHeightRl: 9);
         canvas.Line(313, 2, 313, 184, 0.5);
 
@@ -119,9 +119,6 @@ public sealed partial class DacteA4Renderer
         canvas.Text(510, 42, 58, 13, vm.DataHoraEmissao, F(8.25, true));
         canvas.Line(313, 57, 741, 57, 0.5); // rlsLinhaH02 (313,57,428,1)
 
-        canvas.Text(618, 34, 120, 8, "INSC. SUFRAMA DO DESTINATÁRIO", F(5.25));
-        canvas.Text(618, 42, 56, 12, vm.Destinatario?.CnpjCpf ?? "", F(6.75));
-
         // --- TIPO DO CT-E / TIPO DO SERVIÇO / indicador-tomador / forma-pagamento block ---
         // (retrato_layout.md lines 234-239/250-251: RLLabel200/199 static, rllTipoCte/rllTipoServico
         // at raw Y=127/137; RLLabel28/rllTomaServico and RLLabel78/rllFormaPagamento at Y=156/166 -
@@ -130,6 +127,8 @@ public sealed partial class DacteA4Renderer
         canvas.Text(4, 137, 168, 15, vm.TipoCteTexto, F(6.75));
         canvas.Text(178, 127, 61, 8, "TIPO DO SERVIÇO", F(5.25));
         canvas.Text(178, 137, 132, 15, vm.TipoServicoTexto, F(6.75));
+        canvas.Line(0, 120, vm.MostrarQrCode ? 620 : 741, 120, 1);
+        canvas.Line(0, 150, vm.MostrarQrCode ? 620 : 741, 150, 1); 
         canvas.Line(176, 120, 176, vm.ModeloOS ? 151 : 180, 0.5); // rlsLinhaV01 (176,120,1,60; Height:=31 when modelo=67)
 
         canvas.Text(4, 156, 81, 8, vm.RotuloTomaServicoIndicador, F(5.25));
@@ -137,18 +136,19 @@ public sealed partial class DacteA4Renderer
         canvas.Text(178, 156, 83, 8, vm.RotuloFormaPagamento, F(5.25));
         canvas.Text(178, 166, 134, 15, vm.ObservacaoFormaPagamento, F(6.75));
 
-        canvas.Text(316, 62, 298, 26, vm.MostrarQrCode ? "" : vm.BarcodeDigitos, F(6));
         canvas.Barcode128(316, 62, vm.MostrarQrCode ? 298 : 419, 26, vm.BarcodeDigitos);
 
         if (vm.MostrarQrCode && !string.IsNullOrWhiteSpace(vm.QrCodeUrl))
-            canvas.QrCode(618, 59, 94, vm.QrCodeUrl!);
+        {
+            canvas.QrCode(630, 70, 94, vm.QrCodeUrl!);
+            canvas.Line(620, 58, 620, 183, 1);
+        }
 
         canvas.Text(316, 92, 58, 11, "Chave de acesso", F(6, true));
         canvas.Text(315, 104, 300, 14, vm.ChaveAcessoFormatada, F(8.25, true));
 
         canvas.Text(334, 156, 55, 8, "N. PROTOCOLO", F(5.25, true));
-        canvas.Text(336, 166, 402, 15, vm.TextoProtocolo, F(8.25, true), TextAlign.Center);
-        canvas.Line(314, 120, vm.MostrarQrCode ? 618 : 741, 120, 0.5);
+        canvas.Text(336, 166, 300, 15, vm.TextoProtocolo, F(8.25, true), TextAlign.Center);
 
         if (!vm.UsarBarcodeContingencia)
         {

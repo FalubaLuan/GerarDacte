@@ -79,8 +79,8 @@ public static class CteXmlParser
             throw new CteXmlException($"Elemento raiz '{root.Name.LocalName}' não reconhecido como CT-e.");
         }
 
-        var infCte = cteEl.Child("infCTe")
-            ?? throw new CteXmlException("Elemento infCTe não encontrado.");
+        var infCte = cteEl.Child("infCte")
+            ?? throw new CteXmlException("Elemento infCte não encontrado.");
 
         var id = infCte.Attr("Id");
         if (string.IsNullOrWhiteSpace(id) || !id.Any(char.IsDigit))
@@ -144,7 +144,7 @@ public static class CteXmlParser
             };
         }
 
-        var infCTeSuplEl = infCte.Child("infCTeSupl");
+        var infCTeSuplEl = cteEl.Child("infCTeSupl");
         if (infCTeSuplEl is not null)
         {
             var qr = infCTeSuplEl.ChildText("qrCodCTe");

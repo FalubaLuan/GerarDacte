@@ -17,8 +17,8 @@ public sealed partial class DacteA4Renderer
         // CFOP / natureza da operação + origem/destino da prestação (RLLabel29/rllNatOperacao,
         // RLLabel12/rllOrigPrestacao, RLLabel14/rllDestPrestacao - retrato_layout.md rlb_03_DadosDACTe,
         // NOT rlb_02_Cabecalho, which the previous implementation incorrectly placed this in)
-        canvas.Text(4, 2, 115, 8, "CFOP - NATUREZA DA OPERAÇÃO", F(5.25));
-        canvas.Text(4, 11, 733, 15, $"{vm.Cfop} - {vm.NaturezaOperacao}", F(8.25));
+        canvas.Text(4, 4, 115, 8, "CFOP - NATUREZA DA OPERAÇÃO", F(5.25));
+        canvas.Text(4, 13, 733, 15, $"{vm.Cfop} - {vm.NaturezaOperacao}", F(8.25));
         canvas.Line(1, 26, 741, 26, 0.5); // rlsLinhaH05
 
         canvas.Text(4, 28, 84, 8, "ORIGEM DA PRESTAÇÃO", F(5.25));
@@ -178,20 +178,20 @@ public sealed partial class DacteA4Renderer
         canvas.Text(286, 3, 135, 8, "OUTRAS CARACTERÍSTICAS DA CARGA", F(5.25));
         canvas.Text(287, 13, 249, 13, vm.OutrasCaracteristicasCarga, F(6.75));
         canvas.Text(546, 3, 111, 8, "VALOR TOTAL DA MERCADORIA", F(5.25));
-        canvas.Text(549, 13, 185, 13, vm.ValorTotalCarga, F(6.75, true), TextAlign.Right);
+        canvas.Text(549, 13, 185, 13, vm.ValorTotalCarga, F(6.75, true), TextAlign.Center);
 
         canvas.Text(5, 29, 100, 9, "PESO BRUTO (Kg)", F(5.25), TextAlign.Center);
-        canvas.Memo(5, 38, 100, Lines(vm.PesoBrutoKg), F(6.75), TextAlign.Right);
+        canvas.Memo(5, 38, 100, Lines(vm.PesoBrutoKg), F(6.75), TextAlign.Center);
         canvas.Text(118, 29, 100, 9, "PESO BASE CÁLC. (Kg)", F(5.25), TextAlign.Center);
-        canvas.Memo(118, 38, 100, Lines(vm.PesoBaseCalculoKg), F(6.75), TextAlign.Right);
+        canvas.Memo(118, 38, 100, Lines(vm.PesoBaseCalculoKg), F(6.75), TextAlign.Center);
         canvas.Text(232, 29, 100, 9, "PESO AFERIDO (Kg)", F(5.25), TextAlign.Center);
-        canvas.Memo(232, 38, 100, Lines(vm.PesoAferidoKg), F(6.75), TextAlign.Right);
+        canvas.Memo(232, 38, 100, Lines(vm.PesoAferidoKg), F(6.75), TextAlign.Center);
         canvas.Text(341, 29, 100, 9, "CUBAGEM (M3)", F(5.25), TextAlign.Center);
-        canvas.Memo(341, 38, 100, Lines(vm.CubagemM3), F(6.75), TextAlign.Right);
+        canvas.Memo(341, 38, 100, Lines(vm.CubagemM3), F(6.75), TextAlign.Center);
         canvas.Text(456, 29, 280, 9, "QTDE. VOLUMES (Unid)", F(5.25), TextAlign.Center);
-        canvas.Memo(456, 38, 280, vm.LinhasMedida.Select(l => $"{l.TipoMedida}: {l.Quantidade} {l.UnidadeMedida}"), F(6.75), TextAlign.Right);
+        canvas.Memo(456, 38, 280, vm.LinhasMedida.Select(l => $"{l.TipoMedida}: {l.Quantidade} {l.UnidadeMedida}"), F(6.75), TextAlign.Center);
 
-        canvas.Line(84, 27, 84, 89, 0.5);
+        canvas.Line(100, 27, 100, 89, 0.5);
         canvas.Line(232, 27, 232, 89, 0.5);
         canvas.Line(341, 27, 341, 89, 0.5);
         canvas.Line(456, 27, 456, 89, 0.5);

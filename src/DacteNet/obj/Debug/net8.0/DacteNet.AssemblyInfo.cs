@@ -17,7 +17,7 @@ using System.Reflection;
     "layout and business rules of the ACBrCTe Delphi component. No third-party NuGet " +
     "dependencies."))]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ab4fd50abe644f86fab70702ad1df61b0ad4dae1")]
 [assembly: System.Reflection.AssemblyProductAttribute("DacteNet")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DacteNet")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -107,6 +107,8 @@ public sealed partial class DacteA4Renderer
         EnsureSpace(canvas, h);
         canvas.Rect(0, 0, 741, h);
         canvas.Text(6, 3, 732, 12, "COMPONENTES DO VALOR DA PRESTAÇÃO DE SERVIÇO", F(6.75), TextAlign.Center);
+        canvas.Text(3, 5, 300, 12, "NOME", F(6.75), TextAlign.Left);
+        canvas.Text(153, 5, 300, 12, "VALOR", F(6.75), TextAlign.Left);
         canvas.Line(1, 16, 741, 16, 0.5);
         canvas.Line(186, 16, 186, 78, 0.5);
         canvas.Line(372, 16, 372, 78, 0.5);
@@ -137,11 +139,11 @@ public sealed partial class DacteA4Renderer
         if (vm.Icms.MostrarColunaIcmsSt) canvas.Text(656, 95, 29, 8, "ICMS ST", F(5.25));
 
         canvas.Text(3, 102, 340, 13, vm.Icms.SituacaoTributaria, F(6.75));
-        canvas.Text(350, 102, 95, 13, vm.Icms.BaseCalculo, F(6.75, true), TextAlign.Right);
-        canvas.Text(454, 102, 41, 13, vm.Icms.Aliquota, F(6.75, true), TextAlign.Right);
-        canvas.Text(504, 102, 79, 13, vm.Icms.ValorIcms, F(6.75, true), TextAlign.Right);
-        if (vm.Icms.MostrarColunaReducaoBc) canvas.Text(590, 102, 57, 13, vm.Icms.PercentualReducaoBc, F(6.75, true), TextAlign.Right);
-        if (vm.Icms.MostrarColunaIcmsSt) canvas.Text(656, 102, 81, 13, vm.Icms.IcmsStLegado, F(6.75, true), TextAlign.Right);
+        canvas.Text(350, 102, 95, 13, vm.Icms.BaseCalculo, F(6.75, true), TextAlign.Center);
+        canvas.Text(454, 102, 41, 13, vm.Icms.Aliquota, F(6.75, true), TextAlign.Center);
+        canvas.Text(504, 102, 79, 13, vm.Icms.ValorIcms, F(6.75, true), TextAlign.Center);
+        if (vm.Icms.MostrarColunaReducaoBc) canvas.Text(590, 102, 57, 13, vm.Icms.PercentualReducaoBc, F(6.75, true), TextAlign.Center);
+        if (vm.Icms.MostrarColunaIcmsSt) canvas.Text(656, 102, 81, 13, vm.Icms.IcmsStLegado, F(6.75, true), TextAlign.Center);
 
         if (vm.ModeloOS && vm.TributosFederais is not null)
         {
