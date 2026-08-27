@@ -11,7 +11,7 @@ using System;
 using System.Reflection;
 
 [assembly: System.Reflection.AssemblyCompanyAttribute("Generated from ACBrCTe (ACBr Project) reference analysis")]
-[assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
+[assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute(("Independent .NET class library that generates a DACTE (Documento Auxiliar do Conh" +
     "ecimento de Transporte Eletrônico) PDF from a CT-e XML document, modeled on the " +
     "layout and business rules of the ACBrCTe Delphi component. No third-party NuGet " +
