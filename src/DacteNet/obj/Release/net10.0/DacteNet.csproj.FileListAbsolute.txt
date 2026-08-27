@@ -1,0 +1,14 @@
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\bin\Release\net10.0\DacteNet.deps.json
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\bin\Release\net10.0\DacteNet.dll
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\bin\Release\net10.0\DacteNet.pdb
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\bin\Release\net10.0\DacteNet.xml
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Release\net10.0\DacteNet.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Release\net10.0\DacteNet.AssemblyInfoInputs.cache
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Release\net10.0\DacteNet.AssemblyInfo.cs
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Release\net10.0\DacteNet.csproj.CoreCompileInputs.cache
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Release\net10.0\DacteNet.sourcelink.json
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Release\net10.0\DacteNet.dll
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Release\net10.0\refint\DacteNet.dll
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Release\net10.0\DacteNet.xml
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Release\net10.0\DacteNet.pdb
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Release\net10.0\ref\DacteNet.dll
