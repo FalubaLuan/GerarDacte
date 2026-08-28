@@ -352,7 +352,6 @@ public sealed class DacteA5Renderer
         if (vm.ModalRodoviario is not null)
         {
             canvas.Text(6, 1, 72, 8, "RNTRC DA EMPRESA", F(5.25));
-            canvas.Text(6, 8, 64, 12, vm.RntrcOuTaf, F(6.75));
             canvas.Text(84, 1, 18, 8, "CIOT", F(5.25));
             canvas.Text(84, 8, 32, 12, vm.ModalRodoviario.CiotOuRegistroEstadual, F(6.75));
             canvas.Text(154, 1, 35, 8, "LOTAÇÃO", F(5.25));

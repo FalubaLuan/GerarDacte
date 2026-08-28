@@ -34,12 +34,13 @@ public sealed partial class DacteA4Renderer
         // Remetente
         canvas.Text(4, 54, 42, 8, "REMETENTE", F(5.25));
         canvas.Text(48, 54, 318, 13, vm.Remetente?.RazaoSocial ?? "", F(6.75));
-        canvas.Text(4, 62, 39, 8, "ENDEREÇO", F(5.25));
-        canvas.Text(48, 62, 318, 13, vm.Remetente?.EnderecoLinha ?? "", F(6.75));
-        canvas.Text(4, 78, 38, 8, "MUNICÍPIO", F(5.25));
-        canvas.Text(48, 78, 234, 19, vm.Remetente?.MunicipioUf ?? "", F(6.75));
-        canvas.Text(284, 78, 15, 8, "CEP", F(5.25));
-        canvas.Text(301, 78, 64, 13, vm.Remetente?.Cep ?? "", F(6.75));
+        canvas.Text(4, 65, 39, 8, "ENDEREÇO", F(5.25));
+        var enderecoRem = vm.Remetente?.EnderecoLinha ?? "";
+        canvas.Text(48, 65, 318, 13, enderecoRem.Length > 65 ? $"{enderecoRem[..65]}..." : enderecoRem, F(6.75));
+        canvas.Text(4, 76, 38, 8, "MUNICÍPIO", F(5.25));
+        canvas.Text(48, 76, 234, 19, vm.Remetente?.MunicipioUf ?? "", F(6.75));
+        canvas.Text(282, 76, 15, 8, "CEP", F(6.75));
+        canvas.Text(301, 76, 64, 13, vm.Remetente?.Cep ?? "", F(6.75));
         canvas.Text(4, 87, 34, 8, "CNPJ/CPF", F(5.25));
         canvas.Text(48, 87, 124, 13, vm.Remetente?.CnpjCpf ?? "", F(6.75));
         canvas.Text(174, 87, 78, 8, "INSCRIÇÃO ESTADUAL", F(5.25));
@@ -52,12 +53,13 @@ public sealed partial class DacteA4Renderer
         // Destinatário
         canvas.Text(374, 54, 52, 8, "DESTINATÁRIO", F(5.25));
         canvas.Text(432, 54, 303, 13, vm.Destinatario?.RazaoSocial ?? "", F(6.75));
-        canvas.Text(374, 62, 39, 8, "ENDEREÇO", F(5.25));
-        canvas.Text(432, 62, 303, 10, vm.Destinatario?.EnderecoLinha ?? "", F(6.75));
-        canvas.Text(374, 78, 38, 8, "MUNICÍPIO", F(5.25));
-        canvas.Text(432, 78, 225, 13, vm.Destinatario?.MunicipioUf ?? "", F(6.75));
-        canvas.Text(660, 78, 15, 8, "CEP", F(5.25));
-        canvas.Text(677, 78, 57, 13, vm.Destinatario?.Cep ?? "", F(6.75));
+        canvas.Text(374, 65, 39, 8, "ENDEREÇO", F(5.25));
+        var enderecoDest = vm.Destinatario?.EnderecoLinha ?? "";
+        canvas.Text(432, 65, 303, 10, enderecoDest.Length > 65 ? $"{enderecoDest[..65]}..." : enderecoDest, F(6.75));
+        canvas.Text(374, 76, 38, 8, "MUNICÍPIO", F(5.25));
+        canvas.Text(432, 76, 225, 13, vm.Destinatario?.MunicipioUf ?? "", F(6.75));
+        canvas.Text(658, 76, 15, 8, "CEP", F(6.75));
+        canvas.Text(677, 76, 57, 13, vm.Destinatario?.Cep ?? "", F(6.75));
         canvas.Text(374, 87, 34, 8, "CNPJ/CPF", F(5.25));
         canvas.Text(432, 87, 115, 18, vm.Destinatario?.CnpjCpf ?? "", F(6.75));
         canvas.Text(551, 87, 78, 8, "INSCRIÇÃO ESTADUAL", F(5.25));

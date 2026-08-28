@@ -8,17 +8,17 @@
     ".NETCoreApp,Version=v10.0": {
       "DacteNet.Sample/1.0.0": {
         "dependencies": {
-          "DacteNet": "1.0.3"
+          "DacteNet": "1.0.4"
         },
         "runtime": {
           "DacteNet.Sample.dll": {}
         }
       },
-      "DacteNet/1.0.3": {
+      "DacteNet/1.0.4": {
         "runtime": {
           "DacteNet.dll": {
-            "assemblyVersion": "1.0.3.0",
-            "fileVersion": "1.0.3.0"
+            "assemblyVersion": "1.0.4.0",
+            "fileVersion": "1.0.4.0"
           }
         }
       }
@@ -30,7 +30,7 @@
       "serviceable": false,
       "sha512": ""
     },
-    "DacteNet/1.0.3": {
+    "DacteNet/1.0.4": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

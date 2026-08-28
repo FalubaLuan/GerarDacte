@@ -41,7 +41,7 @@ static string FindDefaultSampleXml()
     var dir = new DirectoryInfo(AppContext.BaseDirectory);
     for (int i = 0; i < 8 && dir is not null; i++)
     {
-        var candidate = Path.Combine(dir.FullName, "testdata", "31260551056582000169570020000036671000037631-Cte.xml");
+        var candidate = Path.Combine(dir.FullName, "testdata", "42260803007331021653570010309526701861261412.xml");
         if (File.Exists(candidate)) return candidate;
         dir = dir.Parent;
     }
