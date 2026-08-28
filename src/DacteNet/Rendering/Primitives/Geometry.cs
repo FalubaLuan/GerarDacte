@@ -34,5 +34,5 @@ public readonly struct PdfColor
     public PdfColor(double r, double g, double b) { R = r; G = g; B = b; }
     public static readonly PdfColor Black = new(0, 0, 0);
     public static readonly PdfColor White = new(1, 1, 1);
-    public static readonly PdfColor Gray = new(0.5, 0.5, 0.5);
+    public static readonly PdfColor Gray = new(0.8, 0.8, 0.8);
 }

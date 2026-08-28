@@ -606,7 +606,7 @@ public static class CteXmlParser
             });
         }
 
-        if (infCTeNorm.Child("rodo") is { } rodoEl) result.Rodoviario = ParseRodo(rodoEl, versao);
+        if (infCTeNorm.Child("infModal").Child("rodo") is { } rodoEl) result.Rodoviario = ParseRodo(rodoEl, versao);
         if (infCTeNorm.Child("rodoOS") is { } rodoOsEl) result.RodoviarioOS = ParseRodoOS(rodoOsEl);
         if (infCTeNorm.Child("aereo") is { } aereoEl) result.Aereo = ParseAereo(aereoEl, versao);
         if (infCTeNorm.Child("aquav") is { } aquavEl) result.Aquaviario = ParseAquav(aquavEl);

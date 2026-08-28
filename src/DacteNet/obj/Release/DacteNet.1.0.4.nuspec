@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>DacteNet</id>
+    <version>1.0.4</version>
+    <authors>Generated from ACBrCTe (ACBr Project) reference analysis</authors>
+    <license type="file">LICENSE.md</license>
+    <licenseUrl>https://aka.ms/deprecateLicenseUrl</licenseUrl>
+    <readme>README.md</readme>
+    <description>Independent .NET class library that generates a DACTE (Documento Auxiliar do Conhecimento de Transporte Eletrônico) PDF from a CT-e XML document, modeled on the layout and business rules of the ACBrCTe Delphi component. No third-party NuGet dependencies.</description>
+    <repository type="git" commit="4b91645329604c31850033d848acfd43deed5217" />
+    <dependencies>
+      <group targetFramework="net10.0" />
+      <group targetFramework="net8.0-windows7.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\bin\Release\net10.0\DacteNet.dll" target="lib\net10.0\DacteNet.dll" />
+    <file src="C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\bin\Release\net10.0\DacteNet.xml" target="lib\net10.0\DacteNet.xml" />
+    <file src="C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\bin\Release\net8.0-windows\DacteNet.dll" target="lib\net8.0-windows7.0\DacteNet.dll" />
+    <file src="C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\bin\Release\net8.0-windows\DacteNet.xml" target="lib\net8.0-windows7.0\DacteNet.xml" />
+    <file src="C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\docs\README.md" target="\README.md" />
+    <file src="C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\docs\LICENSE.md" target="\LICENSE.md" />
+  </files>
+</package>

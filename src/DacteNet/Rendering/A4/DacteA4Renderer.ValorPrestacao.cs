@@ -103,12 +103,20 @@ public sealed partial class DacteA4Renderer
     // ------------------------------------------------------------------
     private static void RenderValorPrestacao(ReportCanvas canvas, DacteViewModel vm)
     {
+        canvas.FilledRect(556, 15, 185, 30, PdfColor.Gray);
+        canvas.Rect(556, 15, 185, 30, BorderSides.Bottom);
         double h = vm.ModeloOS ? 144 : 117;
         EnsureSpace(canvas, h);
         canvas.Rect(0, 0, 741, h);
         canvas.Text(6, 3, 732, 12, "COMPONENTES DO VALOR DA PRESTAÇÃO DE SERVIÇO", F(6.75), TextAlign.Center);
-        canvas.Text(3, 5, 300, 12, "NOME", F(6.75), TextAlign.Left);
-        canvas.Text(153, 5, 300, 12, "VALOR", F(6.75), TextAlign.Left);
+        canvas.Text(3, 17, 300, 12, "NOME", F(6.75), TextAlign.Left);
+        canvas.Text(153, 17, 300, 12, "VALOR", F(6.75), TextAlign.Left);
+        canvas.Text(188, 17, 300, 12, "NOME", F(6.75), TextAlign.Left);
+        canvas.Text(338, 17, 300, 12, "VALOR", F(6.75), TextAlign.Left);
+        canvas.Text(375, 17, 300, 12, "NOME", F(6.75), TextAlign.Left);
+        canvas.Text(523, 17, 300, 12, "VALOR", F(6.75), TextAlign.Left);
+        canvas.Line(1, 28, 555, 28, 0.5);
+        
         canvas.Line(1, 16, 741, 16, 0.5);
         canvas.Line(186, 16, 186, 78, 0.5);
         canvas.Line(372, 16, 372, 78, 0.5);
@@ -117,12 +125,12 @@ public sealed partial class DacteA4Renderer
         var col1 = vm.ComponentesPrestacao.Where((_, i) => i % 3 == 0).ToList();
         var col2 = vm.ComponentesPrestacao.Where((_, i) => i % 3 == 1).ToList();
         var col3 = vm.ComponentesPrestacao.Where((_, i) => i % 3 == 2).ToList();
-        canvas.Memo(5, 19, 96, col1.Select(c => c.Item1), F(6.75));
-        canvas.Memo(104, 19, 78, col1.Select(c => c.Item2), F(6.75), TextAlign.Right);
-        canvas.Memo(190, 19, 96, col2.Select(c => c.Item1), F(6.75));
-        canvas.Memo(290, 19, 78, col2.Select(c => c.Item2), F(6.75), TextAlign.Right);
-        canvas.Memo(377, 19, 96, col3.Select(c => c.Item1), F(6.75));
-        canvas.Memo(476, 19, 78, col3.Select(c => c.Item2), F(6.75), TextAlign.Right);
+        canvas.Memo(5, 35, 96, col1.Select(c => c.Item1), F(6.75));
+        canvas.Memo(104, 35, 78, col1.Select(c => c.Item2), F(6.75), TextAlign.Right);
+        canvas.Memo(190, 35, 96, col2.Select(c => c.Item1), F(6.75));
+        canvas.Memo(290, 35, 78, col2.Select(c => c.Item2), F(6.75), TextAlign.Right);
+        canvas.Memo(377, 35, 96, col3.Select(c => c.Item1), F(6.75));
+        canvas.Memo(476, 35, 78, col3.Select(c => c.Item2), F(6.75), TextAlign.Right);
 
         canvas.Text(560, 19, 96, 9, "VALOR TOTAL DO SERVIÇO", F(5.25));
         canvas.Text(570, 29, 164, 14, vm.ValorTotalServico, F(8.25, true), TextAlign.Right);

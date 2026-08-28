@@ -116,6 +116,7 @@ public sealed partial class DacteA4Renderer
         canvas.Text(378, 34, 83, 9, "NÚMERO", F(5.25), TextAlign.Center);
         canvas.Text(378, 42, 83, 15, vm.NumeroCTe, F(9.75, true));
         canvas.Text(510, 34, 95, 9, "DATA E HORA DE EMISSÃO", F(5.25));
+        canvas.Text(620, 34, 95, 9, "INSC. SUFRAMA DO DESTINATÁRIO", F(5.25));
         canvas.Text(510, 42, 58, 13, vm.DataHoraEmissao, F(8.25, true));
         canvas.Line(313, 57, 741, 57, 0.5); // rlsLinhaH02 (313,57,428,1)
 
