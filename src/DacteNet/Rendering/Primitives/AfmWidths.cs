@@ -43,6 +43,112 @@ public static class AfmWidths
         return total / 1000.0 * sizePt;
     }
 
+    /// <summary>
+    /// Breaks <paramref name="text"/> into the fewest lines that each fit within <paramref name="maxWidthPt"/>,
+    /// wrapping on spaces (normal word-wrap). A single "word" that is wider than the box on its own is
+    /// hard-split character by character instead of being left to overflow - this covers pathological cases
+    /// like an unbroken CNPJ/CPF-less free-text field, a long e-mail address, or a run-on word typed without
+    /// spaces, all of which show up in real CT-e XML free-text fields (observações, razão social, endereço).
+    /// </summary>
+    public static List<string> WordWrap(PdfStandardFont font, string text, double sizePt, double maxWidthPt)
+    {
+        var lines = new List<string>();
+        if (string.IsNullOrEmpty(text)) return lines;
+        if (maxWidthPt <= 0)
+        {
+            lines.Add(text);
+            return lines;
+        }
+
+        var current = "";
+        foreach (var word in text.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (MeasureWidthPt(font, word, sizePt) > maxWidthPt)
+            {
+                // The word alone doesn't fit the box - flush whatever we've accumulated, then hard-split
+                // the word itself so no fragment of it ever exceeds maxWidthPt.
+                if (current.Length > 0)
+                {
+                    lines.Add(current);
+                    current = "";
+                }
+
+                var chunk = "";
+                foreach (var ch in word)
+                {
+                    var candidate = chunk + ch;
+                    if (chunk.Length > 0 && MeasureWidthPt(font, candidate, sizePt) > maxWidthPt)
+                    {
+                        lines.Add(chunk);
+                        chunk = ch.ToString();
+                    }
+                    else
+                    {
+                        chunk = candidate;
+                    }
+                }
+                current = chunk; // remainder starts the next line and may still take more words
+                continue;
+            }
+
+            var withWord = current.Length == 0 ? word : current + " " + word;
+            if (MeasureWidthPt(font, withWord, sizePt) <= maxWidthPt)
+            {
+                current = withWord;
+            }
+            else
+            {
+                if (current.Length > 0) lines.Add(current);
+                current = word;
+            }
+        }
+
+        if (current.Length > 0) lines.Add(current);
+        return lines;
+    }
+
+    /// <summary>
+    /// Same as <see cref="WordWrap(PdfStandardFont, string, double, double)"/> but caps the result at
+    /// <paramref name="maxLines"/> lines - if the text needs more than that, everything past the first
+    /// <paramref name="maxLines"/> - 1 lines is folded back together and ellipsis-truncated onto the last
+    /// line, so a pathologically long value still only ever occupies a bounded, predictable amount of
+    /// vertical space (used by fixed-form boxes that can open up to one extra line, but no more).
+    /// </summary>
+    public static List<string> WordWrap(PdfStandardFont font, string text, double sizePt, double maxWidthPt, int maxLines)
+    {
+        var lines = WordWrap(font, text, sizePt, maxWidthPt);
+        if (maxLines <= 0 || lines.Count <= maxLines) return lines;
+
+        var kept = lines.Take(maxLines - 1).ToList();
+        var remainder = string.Join(" ", lines.Skip(maxLines - 1));
+        kept.Add(TruncateWithEllipsis(font, remainder, sizePt, maxWidthPt));
+        return kept;
+    }
+
+    /// <summary>
+    /// Truncates <paramref name="text"/> with a trailing "..." so it fits within <paramref name="maxWidthPt"/>,
+    /// for single-line boxes that must not wrap or grow (e.g. a one-line label control). Returns the original
+    /// text unchanged if it already fits.
+    /// </summary>
+    public static string TruncateWithEllipsis(PdfStandardFont font, string text, double sizePt, double maxWidthPt)
+    {
+        if (string.IsNullOrEmpty(text) || maxWidthPt <= 0) return text;
+        if (MeasureWidthPt(font, text, sizePt) <= maxWidthPt) return text;
+
+        const string ellipsis = "...";
+        var ellipsisWidth = MeasureWidthPt(font, ellipsis, sizePt);
+        if (ellipsisWidth > maxWidthPt) return ellipsis;
+
+        var kept = "";
+        foreach (var ch in text)
+        {
+            var candidate = kept + ch;
+            if (MeasureWidthPt(font, candidate, sizePt) + ellipsisWidth > maxWidthPt) break;
+            kept = candidate;
+        }
+        return kept.TrimEnd() + ellipsis;
+    }
+
     // ------------------------------------------------------------------
     // Helvetica
     // ------------------------------------------------------------------

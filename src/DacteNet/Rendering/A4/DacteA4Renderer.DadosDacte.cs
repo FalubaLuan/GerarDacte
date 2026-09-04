@@ -10,9 +10,40 @@ public sealed partial class DacteA4Renderer
     // ------------------------------------------------------------------
     private static void RenderDadosDacte(ReportCanvas canvas, DacteViewModel vm)
     {
-        const double h = 202;
+        // Razão social / endereço are the two fields most likely to be longer than their box in real
+        // CT-e's. Instead of shrinking their font (which looked inconsistent next to the rest of the
+        // fixed-size form - see PR feedback), each pair of side-by-side boxes (Remetente/Destinatário,
+        // then Expedidor/Recebedor, then Tomador on its own) is allowed to grow by up to one extra line
+        // per field, at full size; every row below it in the same band is then pushed down by that same
+        // amount so nothing overlaps. Most real documents need none of this and render pixel-identical
+        // to before.
+        const double pitch = 9; // raw units per extra wrapped line
+        const double f675Width318 = 318, f675Width303 = 303, f675Width310 = 310, f675Width280 = 280, f675Width445 = 445;
+        var fBody = F(6.75);
+
+        int nomeLinesTop = Math.Max(
+            canvas.CountWrappedLines(vm.Remetente?.RazaoSocial, f675Width318, fBody),
+            canvas.CountWrappedLines(vm.Destinatario?.RazaoSocial, f675Width303, fBody));
+        int endLinesTop = Math.Max(
+            canvas.CountWrappedLines(vm.Remetente?.EnderecoLinha, f675Width318, fBody),
+            canvas.CountWrappedLines(vm.Destinatario?.EnderecoLinha, f675Width303, fBody));
+        double extraTop = (nomeLinesTop - 1 + endLinesTop - 1) * pitch;
+
+        int nomeLinesMid = Math.Max(
+            canvas.CountWrappedLines(vm.Expedidor?.RazaoSocial, f675Width318, fBody),
+            canvas.CountWrappedLines(vm.Recebedor?.RazaoSocial, f675Width310, fBody));
+        int endLinesMid = Math.Max(
+            canvas.CountWrappedLines(vm.Expedidor?.EnderecoLinha, f675Width318, fBody),
+            canvas.CountWrappedLines(vm.Recebedor?.EnderecoLinha, f675Width310, fBody));
+        double extraMid = (nomeLinesMid - 1 + endLinesMid - 1) * pitch;
+
+        int nomeLinesBottom = canvas.CountWrappedLines(vm.TomadorServico?.RazaoSocial, f675Width280, fBody);
+        int endLinesBottom = canvas.CountWrappedLines(vm.TomadorServico?.EnderecoLinha, f675Width445, fBody);
+        double extraBottom = (nomeLinesBottom - 1 + endLinesBottom - 1) * pitch;
+
+        var h = 202 + extraTop + extraMid + extraBottom;
         EnsureSpace(canvas, h);
-        canvas.Rect(0, 0, 741, 202);
+        canvas.Rect(0, 0, 741, h);
 
         // CFOP / natureza da operação + origem/destino da prestação (RLLabel29/rllNatOperacao,
         // RLLabel12/rllOrigPrestacao, RLLabel14/rllDestPrestacao - retrato_layout.md rlb_03_DadosDACTe,
@@ -26,102 +57,119 @@ public sealed partial class DacteA4Renderer
         canvas.Text(374, 28, 86, 8, "DESTINO DA PRESTAÇÃO", F(5.25));
         canvas.Text(374, 36, 360, 15, vm.MunicipioFim, F(8.25));
 
+        double yBottomTop = 109 + extraTop;
+        double yBottomMid = 167 + extraTop + extraMid;
         canvas.Line(1, 51, 741, 51, 0.5);
-        canvas.Line(1, 109, 741, 109, 0.5);
-        canvas.Line(1, 167, 741, 167, 0.5);
-        canvas.Line(370, 27, 370, 168, 0.5);
+        canvas.Line(1, yBottomTop, 741, yBottomTop, 0.5);
+        canvas.Line(1, yBottomMid, 741, yBottomMid, 0.5);
+        canvas.Line(370, 27, 370, yBottomMid, 0.5);
 
-        // Remetente
-        canvas.Text(4, 54, 42, 8, "REMETENTE", F(5.25));
-        canvas.Text(48, 54, 318, 13, vm.Remetente?.RazaoSocial ?? "", F(6.75));
-        canvas.Text(4, 65, 39, 8, "ENDEREÇO", F(5.25));
-        var enderecoRem = vm.Remetente?.EnderecoLinha ?? "";
-        canvas.Text(48, 65, 318, 13, enderecoRem.Length > 65 ? $"{enderecoRem[..65]}..." : enderecoRem, F(6.75));
-        canvas.Text(4, 76, 38, 8, "MUNICÍPIO", F(5.25));
-        canvas.Text(48, 76, 234, 19, vm.Remetente?.MunicipioUf ?? "", F(6.75));
-        canvas.Text(282, 76, 15, 8, "CEP", F(6.75));
-        canvas.Text(301, 76, 64, 13, vm.Remetente?.Cep ?? "", F(6.75));
-        canvas.Text(4, 87, 34, 8, "CNPJ/CPF", F(5.25));
-        canvas.Text(48, 87, 124, 13, vm.Remetente?.CnpjCpf ?? "", F(6.75));
-        canvas.Text(174, 87, 78, 8, "INSCRIÇÃO ESTADUAL", F(5.25));
-        canvas.Text(256, 87, 109, 13, vm.Remetente?.InscricaoEstadual ?? "", F(6.75));
-        canvas.Text(262, 96, 20, 8, "FONE", F(5.25));
-        canvas.Text(288, 96, 77, 13, vm.Remetente?.Fone ?? "", F(6.75));
-        canvas.Text(4, 96, 17, 8, "PAÍS", F(5.25));
-        canvas.Text(48, 96, 209, 13, vm.Remetente?.Pais ?? "", F(6.75));
+        // Remetente / Destinatário --------------------------------------------------------------
+        double yNome = 54;
+        double yEndereco = 65 + (nomeLinesTop - 1) * pitch;
+        double yMunicipio = 76 + extraTop;
+        double yCnpj = 87 + extraTop;
+        double yFone = 96 + extraTop;
 
-        // Destinatário
-        canvas.Text(374, 54, 52, 8, "DESTINATÁRIO", F(5.25));
-        canvas.Text(432, 54, 303, 13, vm.Destinatario?.RazaoSocial ?? "", F(6.75));
-        canvas.Text(374, 65, 39, 8, "ENDEREÇO", F(5.25));
-        var enderecoDest = vm.Destinatario?.EnderecoLinha ?? "";
-        canvas.Text(432, 65, 303, 10, enderecoDest.Length > 65 ? $"{enderecoDest[..65]}..." : enderecoDest, F(6.75));
-        canvas.Text(374, 76, 38, 8, "MUNICÍPIO", F(5.25));
-        canvas.Text(432, 76, 225, 13, vm.Destinatario?.MunicipioUf ?? "", F(6.75));
-        canvas.Text(658, 76, 15, 8, "CEP", F(6.75));
-        canvas.Text(677, 76, 57, 13, vm.Destinatario?.Cep ?? "", F(6.75));
-        canvas.Text(374, 87, 34, 8, "CNPJ/CPF", F(5.25));
-        canvas.Text(432, 87, 115, 18, vm.Destinatario?.CnpjCpf ?? "", F(6.75));
-        canvas.Text(551, 87, 78, 8, "INSCRIÇÃO ESTADUAL", F(5.25));
-        canvas.Text(632, 87, 102, 13, vm.Destinatario?.InscricaoEstadual ?? "", F(6.75));
-        canvas.Text(640, 96, 20, 8, "FONE", F(5.25));
-        canvas.Text(664, 96, 70, 13, vm.Destinatario?.Fone ?? "", F(6.75));
-        canvas.Text(374, 96, 17, 8, "PAÍS", F(5.25));
-        canvas.Text(432, 96, 203, 13, vm.Destinatario?.Pais ?? "", F(6.75));
+        canvas.Text(4, yNome, 42, 8, "REMETENTE", F(5.25));
+        canvas.TextWrapped(48, yNome, 318, pitch, vm.Remetente?.RazaoSocial ?? "", fBody);
+        canvas.Text(4, yEndereco, 39, 8, "ENDEREÇO", F(5.25));
+        canvas.TextWrapped(48, yEndereco, 318, pitch, vm.Remetente?.EnderecoLinha ?? "", fBody);
+        canvas.Text(4, yMunicipio, 38, 8, "MUNICÍPIO", F(5.25));
+        canvas.Text(48, yMunicipio, 234, 19, vm.Remetente?.MunicipioUf ?? "", fBody);
+        canvas.Text(282, yMunicipio, 15, 8, "CEP", fBody);
+        canvas.Text(301, yMunicipio, 64, 13, vm.Remetente?.Cep ?? "", fBody);
+        canvas.Text(4, yCnpj, 34, 8, "CNPJ/CPF", F(5.25));
+        canvas.Text(48, yCnpj, 124, 13, vm.Remetente?.CnpjCpf ?? "", fBody);
+        canvas.Text(174, yCnpj, 78, 8, "INSCRIÇÃO ESTADUAL", F(5.25));
+        canvas.Text(256, yCnpj, 109, 13, vm.Remetente?.InscricaoEstadual ?? "", fBody);
+        canvas.Text(262, yFone, 20, 8, "FONE", F(5.25));
+        canvas.Text(288, yFone, 77, 13, vm.Remetente?.Fone ?? "", fBody);
+        canvas.Text(4, yFone, 17, 8, "PAÍS", F(5.25));
+        canvas.Text(48, yFone, 209, 13, vm.Remetente?.Pais ?? "", fBody);
 
-        // Expedidor
-        canvas.Text(4, 111, 41, 8, "EXPEDIDOR", F(5.25));
-        canvas.Text(48, 111, 318, 13, vm.Expedidor?.RazaoSocial ?? "", F(6.75));
-        canvas.Text(4, 119, 39, 8, "ENDEREÇO", F(5.25));
-        canvas.Text(48, 119, 318, 13, vm.Expedidor?.EnderecoLinha ?? "", F(6.75));
-        canvas.Text(4, 135, 38, 8, "MUNICÍPIO", F(5.25));
-        canvas.Text(48, 135, 234, 13, vm.Expedidor?.MunicipioUf ?? "", F(6.75));
-        canvas.Text(284, 135, 15, 8, "CEP", F(5.25));
-        canvas.Text(301, 135, 64, 13, vm.Expedidor?.Cep ?? "", F(6.75));
-        canvas.Text(4, 144, 34, 8, "CNPJ/CPF", F(5.25));
-        canvas.Text(48, 144, 124, 13, vm.Expedidor?.CnpjCpf ?? "", F(6.75));
-        canvas.Text(174, 144, 78, 8, "INSCRIÇÃO ESTADUAL", F(5.25));
-        canvas.Text(256, 144, 109, 13, vm.Expedidor?.InscricaoEstadual ?? "", F(6.75));
-        canvas.Text(262, 153, 20, 8, "FONE", F(5.25));
-        canvas.Text(288, 153, 77, 13, vm.Expedidor?.Fone ?? "", F(6.75));
-        canvas.Text(4, 153, 17, 8, "PAÍS", F(5.25));
-        canvas.Text(48, 153, 212, 13, vm.Expedidor?.Pais ?? "", F(6.75));
+        canvas.Text(374, yNome, 52, 8, "DESTINATÁRIO", F(5.25));
+        canvas.TextWrapped(432, yNome, 303, pitch, vm.Destinatario?.RazaoSocial ?? "", fBody);
+        canvas.Text(374, yEndereco, 39, 8, "ENDEREÇO", F(5.25));
+        canvas.TextWrapped(432, yEndereco, 303, pitch, vm.Destinatario?.EnderecoLinha ?? "", fBody);
+        canvas.Text(374, yMunicipio, 38, 8, "MUNICÍPIO", F(5.25));
+        canvas.Text(432, yMunicipio, 225, 13, vm.Destinatario?.MunicipioUf ?? "", fBody);
+        canvas.Text(658, yMunicipio, 15, 8, "CEP", F(5.25));
+        canvas.Text(677, yMunicipio, 57, 13, vm.Destinatario?.Cep ?? "", fBody);
+        canvas.Text(374, yCnpj, 34, 8, "CNPJ/CPF", F(5.25));
+        canvas.Text(432, yCnpj, 115, 18, vm.Destinatario?.CnpjCpf ?? "", fBody);
+        canvas.Text(551, yCnpj, 78, 8, "INSCRIÇÃO ESTADUAL", F(5.25));
+        canvas.Text(632, yCnpj, 102, 13, vm.Destinatario?.InscricaoEstadual ?? "", fBody);
+        canvas.Text(640, yFone, 20, 8, "FONE", F(5.25));
+        canvas.Text(664, yFone, 70, 13, vm.Destinatario?.Fone ?? "", fBody);
+        canvas.Text(374, yFone, 17, 8, "PAÍS", F(5.25));
+        canvas.Text(432, yFone, 203, 13, vm.Destinatario?.Pais ?? "", fBody);
 
-        // Recebedor
-        canvas.Text(374, 111, 44, 8, "RECEBEDOR", F(5.25));
-        canvas.Text(424, 111, 310, 15, vm.Recebedor?.RazaoSocial ?? "", F(6.75));
-        canvas.Text(374, 119, 39, 8, "ENDEREÇO", F(5.25));
-        canvas.Text(424, 119, 310, 13, vm.Recebedor?.EnderecoLinha ?? "", F(6.75));
-        canvas.Text(374, 135, 38, 8, "MUNICÍPIO", F(5.25));
-        canvas.Text(424, 135, 226, 13, vm.Recebedor?.MunicipioUf ?? "", F(6.75));
-        canvas.Text(653, 135, 15, 8, "CEP", F(5.25));
-        canvas.Text(670, 135, 64, 13, vm.Recebedor?.Cep ?? "", F(6.75));
-        canvas.Text(374, 144, 34, 8, "CNPJ/CPF", F(5.25));
-        canvas.Text(424, 144, 121, 13, vm.Recebedor?.CnpjCpf ?? "", F(6.75));
-        canvas.Text(551, 144, 78, 8, "INSCRIÇÃO ESTADUAL", F(5.25));
-        canvas.Text(632, 144, 102, 13, vm.Recebedor?.InscricaoEstadual ?? "", F(6.75));
-        canvas.Text(640, 153, 20, 8, "FONE", F(5.25));
-        canvas.Text(664, 153, 70, 13, vm.Recebedor?.Fone ?? "", F(6.75));
-        canvas.Text(374, 153, 17, 8, "PAÍS", F(5.25));
-        canvas.Text(424, 153, 209, 13, vm.Recebedor?.Pais ?? "", F(6.75));
+        // Expedidor / Recebedor -------------------------------------------------------------------
+        double yNome2 = 111 + extraTop;
+        double yEndereco2 = 119 + extraTop + (nomeLinesMid - 1) * pitch;
+        double yMunicipio2 = 135 + extraTop + extraMid;
+        double yCnpj2 = 144 + extraTop + extraMid;
+        double yFone2 = 153 + extraTop + extraMid;
 
-        // Tomador do serviço
-        canvas.Text(4, 170, 81, 8, "TOMADOR DO SERVIÇO", F(5.25));
-        canvas.Text(88, 169, 280, 13, vm.TomadorServico?.RazaoSocial ?? "", F(6.75));
-        canvas.Text(4, 178, 39, 8, "ENDEREÇO", F(5.25));
-        canvas.Text(48, 177, 445, 13, vm.TomadorServico?.EnderecoLinha ?? "", F(6.75));
-        canvas.Text(374, 170, 38, 8, "MUNICÍPIO", F(5.25));
-        canvas.Text(416, 169, 233, 13, vm.TomadorServico?.MunicipioUf ?? "", F(6.75));
-        canvas.Text(653, 170, 15, 8, "CEP", F(5.25));
-        canvas.Text(670, 169, 64, 13, vm.TomadorServico?.Cep ?? "", F(6.75));
-        canvas.Text(4, 187, 34, 8, "CNPJ/CPF", F(5.25));
-        canvas.Text(41, 187, 130, 13, vm.TomadorServico?.CnpjCpf ?? "", F(6.75));
-        canvas.Text(174, 187, 78, 8, "INSCRIÇÃO ESTADUAL", F(5.25));
-        canvas.Text(256, 187, 111, 13, vm.TomadorServico?.InscricaoEstadual ?? "", F(6.75));
-        canvas.Text(374, 187, 20, 8, "FONE", F(5.25));
-        canvas.Text(398, 187, 85, 13, vm.TomadorServico?.Fone ?? "", F(6.75));
-        canvas.Text(500, 178, 17, 8, "PAÍS", F(5.25));
-        canvas.Text(520, 177, 214, 13, vm.TomadorServico?.Pais ?? "", F(6.75));
+        canvas.Text(4, yNome2, 41, 8, "EXPEDIDOR", F(5.25));
+        canvas.TextWrapped(48, yNome2, 318, pitch, vm.Expedidor?.RazaoSocial ?? "", fBody);
+        canvas.Text(4, yEndereco2, 39, 8, "ENDEREÇO", F(5.25));
+        canvas.TextWrapped(48, yEndereco2, 318, pitch, vm.Expedidor?.EnderecoLinha ?? "", fBody);
+        canvas.Text(4, yMunicipio2, 38, 8, "MUNICÍPIO", F(5.25));
+        canvas.Text(48, yMunicipio2, 234, 13, vm.Expedidor?.MunicipioUf ?? "", fBody);
+        canvas.Text(284, yMunicipio2, 15, 8, "CEP", F(5.25));
+        canvas.Text(301, yMunicipio2, 64, 13, vm.Expedidor?.Cep ?? "", fBody);
+        canvas.Text(4, yCnpj2, 34, 8, "CNPJ/CPF", F(5.25));
+        canvas.Text(48, yCnpj2, 124, 13, vm.Expedidor?.CnpjCpf ?? "", fBody);
+        canvas.Text(174, yCnpj2, 78, 8, "INSCRIÇÃO ESTADUAL", F(5.25));
+        canvas.Text(256, yCnpj2, 109, 13, vm.Expedidor?.InscricaoEstadual ?? "", fBody);
+        canvas.Text(262, yFone2, 20, 8, "FONE", F(5.25));
+        canvas.Text(288, yFone2, 77, 13, vm.Expedidor?.Fone ?? "", fBody);
+        canvas.Text(4, yFone2, 17, 8, "PAÍS", F(5.25));
+        canvas.Text(48, yFone2, 212, 13, vm.Expedidor?.Pais ?? "", fBody);
+
+        canvas.Text(374, yNome2, 44, 8, "RECEBEDOR", F(5.25));
+        canvas.TextWrapped(424, yNome2, 310, pitch, vm.Recebedor?.RazaoSocial ?? "", fBody);
+        canvas.Text(374, yEndereco2, 39, 8, "ENDEREÇO", F(5.25));
+        canvas.TextWrapped(424, yEndereco2, 310, pitch, vm.Recebedor?.EnderecoLinha ?? "", fBody);
+        canvas.Text(374, yMunicipio2, 38, 8, "MUNICÍPIO", F(5.25));
+        canvas.Text(424, yMunicipio2, 226, 13, vm.Recebedor?.MunicipioUf ?? "", fBody);
+        canvas.Text(653, yMunicipio2, 15, 8, "CEP", F(5.25));
+        canvas.Text(670, yMunicipio2, 64, 13, vm.Recebedor?.Cep ?? "", fBody);
+        canvas.Text(374, yCnpj2, 34, 8, "CNPJ/CPF", F(5.25));
+        canvas.Text(424, yCnpj2, 121, 13, vm.Recebedor?.CnpjCpf ?? "", fBody);
+        canvas.Text(551, yCnpj2, 78, 8, "INSCRIÇÃO ESTADUAL", F(5.25));
+        canvas.Text(632, yCnpj2, 102, 13, vm.Recebedor?.InscricaoEstadual ?? "", fBody);
+        canvas.Text(640, yFone2, 20, 8, "FONE", F(5.25));
+        canvas.Text(664, yFone2, 70, 13, vm.Recebedor?.Fone ?? "", fBody);
+        canvas.Text(374, yFone2, 17, 8, "PAÍS", F(5.25));
+        canvas.Text(424, yFone2, 209, 13, vm.Recebedor?.Pais ?? "", fBody);
+
+        // Tomador do serviço ----------------------------------------------------------------------
+        double baseTom = extraTop + extraMid;
+        double yNomeRowTom = 169 + baseTom;
+        double yLabelTomTom = 170 + baseTom;
+        double yEnderecoTom = 177 + baseTom + (nomeLinesBottom - 1) * pitch;
+        double yLabelEnderecoTom = 178 + baseTom + (nomeLinesBottom - 1) * pitch;
+        double yCnpjRowTom = 187 + baseTom + (nomeLinesBottom - 1) * pitch + (endLinesBottom - 1) * pitch;
+
+        canvas.Text(4, yLabelTomTom, 81, 8, "TOMADOR DO SERVIÇO", F(5.25));
+        canvas.TextWrapped(88, yNomeRowTom, 280, pitch, vm.TomadorServico?.RazaoSocial ?? "", fBody);
+        canvas.Text(4, yLabelEnderecoTom, 39, 8, "ENDEREÇO", F(5.25));
+        canvas.TextWrapped(48, yEnderecoTom, 445, pitch, vm.TomadorServico?.EnderecoLinha ?? "", fBody);
+        canvas.Text(374, yLabelTomTom, 38, 8, "MUNICÍPIO", F(5.25));
+        canvas.Text(416, yNomeRowTom, 233, 13, vm.TomadorServico?.MunicipioUf ?? "", fBody);
+        canvas.Text(653, yLabelTomTom, 15, 8, "CEP", F(5.25));
+        canvas.Text(670, yNomeRowTom, 64, 13, vm.TomadorServico?.Cep ?? "", fBody);
+        canvas.Text(4, yCnpjRowTom, 34, 8, "CNPJ/CPF", F(5.25));
+        canvas.Text(41, yCnpjRowTom, 130, 13, vm.TomadorServico?.CnpjCpf ?? "", fBody);
+        canvas.Text(174, yCnpjRowTom, 78, 8, "INSCRIÇÃO ESTADUAL", F(5.25));
+        canvas.Text(256, yCnpjRowTom, 111, 13, vm.TomadorServico?.InscricaoEstadual ?? "", fBody);
+        canvas.Text(374, yCnpjRowTom, 20, 8, "FONE", F(5.25));
+        canvas.Text(398, yCnpjRowTom, 85, 13, vm.TomadorServico?.Fone ?? "", fBody);
+        canvas.Text(500, yLabelEnderecoTom, 17, 8, "PAÍS", F(5.25));
+        canvas.Text(520, yEnderecoTom, 214, 13, vm.TomadorServico?.Pais ?? "", fBody);
 
         canvas.AdvanceBand(h);
     }
@@ -131,9 +179,15 @@ public sealed partial class DacteA4Renderer
     // ------------------------------------------------------------------
     private static void RenderDadosDacteOS(ReportCanvas canvas, DacteViewModel vm)
     {
-        const double h = 69;
+        const double pitch = 9;
+        var fBody = F(6.75);
+        int nomeLines = canvas.CountWrappedLines(vm.TomadorServico?.RazaoSocial, 280, fBody);
+        int endLines = canvas.CountWrappedLines(vm.TomadorServico?.EnderecoLinha, 445, fBody);
+        double extra = (nomeLines - 1 + endLines - 1) * pitch;
+
+        var h = 69 + extra;
         EnsureSpace(canvas, h);
-        canvas.Rect(0, 0, 741, 66);
+        canvas.Rect(0, 0, 741, 66 + extra);
         canvas.Line(1, 28, 741, 28, 0.5);
         canvas.Line(235, 0, 235, 29, 0.5);
         canvas.Line(500, 0, 500, 29, 0.5);
@@ -145,22 +199,29 @@ public sealed partial class DacteA4Renderer
         canvas.Text(504, 3, 88, 8, "TÉRMINO DA PRESTAÇÃO", F(5.25));
         canvas.Text(504, 11, 233, 15, vm.MunicipioFim, F(6.75));
 
-        canvas.Text(4, 32, 81, 8, "TOMADOR DO SERVIÇO", F(5.25));
-        canvas.Text(89, 31, 280, 13, vm.TomadorServico?.RazaoSocial ?? "", F(6.75));
-        canvas.Text(4, 43, 39, 8, "ENDEREÇO", F(5.25));
-        canvas.Text(48, 40, 445, 13, vm.TomadorServico?.EnderecoLinha ?? "", F(6.75));
-        canvas.Text(374, 32, 38, 8, "MUNICÍPIO", F(5.25));
-        canvas.Text(416, 31, 233, 13, vm.TomadorServico?.MunicipioUf ?? "", F(6.75));
-        canvas.Text(653, 32, 15, 8, "CEP", F(5.25));
-        canvas.Text(673, 31, 64, 13, vm.TomadorServico?.Cep ?? "", F(6.75));
-        canvas.Text(3, 55, 34, 8, "CNPJ/CPF", F(5.25));
-        canvas.Text(40, 52, 130, 13, vm.TomadorServico?.CnpjCpf ?? "", F(6.75));
-        canvas.Text(178, 55, 78, 8, "INSCRIÇÃO ESTADUAL", F(5.25));
-        canvas.Text(260, 52, 111, 13, vm.TomadorServico?.InscricaoEstadual ?? "", F(6.75));
-        canvas.Text(378, 55, 20, 8, "FONE", F(5.25));
-        canvas.Text(402, 52, 85, 13, vm.TomadorServico?.Fone ?? "", F(6.75));
-        canvas.Text(500, 43, 17, 8, "PAÍS", F(5.25));
-        canvas.Text(520, 40, 214, 13, vm.TomadorServico?.Pais ?? "", F(6.75));
+        double yNomeRow = 31;
+        double yLabelNomeRow = 32;
+        double yEnderecoRow = 40 + (nomeLines - 1) * pitch;
+        double yLabelEnderecoRow = 43 + (nomeLines - 1) * pitch;
+        double yCnpjLabelRow = 55 + extra;
+        double yCnpjRow = 52 + extra;
+
+        canvas.Text(4, yLabelNomeRow, 81, 8, "TOMADOR DO SERVIÇO", F(5.25));
+        canvas.TextWrapped(89, yNomeRow, 280, pitch, vm.TomadorServico?.RazaoSocial ?? "", fBody);
+        canvas.Text(4, yLabelEnderecoRow, 39, 8, "ENDEREÇO", F(5.25));
+        canvas.TextWrapped(48, yEnderecoRow, 445, pitch, vm.TomadorServico?.EnderecoLinha ?? "", fBody);
+        canvas.Text(374, yLabelNomeRow, 38, 8, "MUNICÍPIO", F(5.25));
+        canvas.Text(416, yNomeRow, 233, 13, vm.TomadorServico?.MunicipioUf ?? "", fBody);
+        canvas.Text(653, yLabelNomeRow, 15, 8, "CEP", F(5.25));
+        canvas.Text(673, yNomeRow, 64, 13, vm.TomadorServico?.Cep ?? "", fBody);
+        canvas.Text(3, yCnpjLabelRow, 34, 8, "CNPJ/CPF", F(5.25));
+        canvas.Text(40, yCnpjRow, 130, 13, vm.TomadorServico?.CnpjCpf ?? "", fBody);
+        canvas.Text(178, yCnpjLabelRow, 78, 8, "INSCRIÇÃO ESTADUAL", F(5.25));
+        canvas.Text(260, yCnpjRow, 111, 13, vm.TomadorServico?.InscricaoEstadual ?? "", fBody);
+        canvas.Text(378, yCnpjLabelRow, 20, 8, "FONE", F(5.25));
+        canvas.Text(402, yCnpjRow, 85, 13, vm.TomadorServico?.Fone ?? "", fBody);
+        canvas.Text(500, yLabelEnderecoRow, 17, 8, "PAÍS", F(5.25));
+        canvas.Text(520, yEnderecoRow, 214, 13, vm.TomadorServico?.Pais ?? "", fBody);
 
         canvas.AdvanceBand(h);
     }

@@ -65,22 +65,50 @@ public sealed class ReportCanvas
     private double AbsYTopDownPt(double topRl) => BandTopPt + Layout.Pt(topRl);
     private double ToPdfY(double topDownYPt) => _pageHeightPt - topDownYPt;
 
+    /// <summary>Smallest fraction of the requested font size that auto-fit is allowed to shrink to before falling back to ellipsis truncation.</summary>
+    private const double MinAutoFitScale = 0.55;
+
     /// <summary>
     /// Draws a single line of text inside the given band-relative box, top-anchored (like the original
     /// Delphi <c>TRLLabel</c>/<c>TRLMemo</c> controls this mirrors: their box height is typically just
     /// slightly taller than one text line, for visual padding, not meant to vertically center text in a
     /// much-taller box - a handful of DACTE fields use noticeably tall boxes, e.g. the 19-raw-unit-tall
     /// municipality box in rlb_03_DadosDACTe, and centering there visibly collided with the row below).
+    ///
+    /// If <paramref name="text"/> is too wide for the box, it is first shrunk (down to
+    /// <see cref="MinAutoFitScale"/> of the requested size) to try to keep it on one line without
+    /// overflowing into neighbouring fields; if it still doesn't fit at the minimum size it is truncated
+    /// with a trailing "..." instead of being left to spill over the box's edges. Pass
+    /// <paramref name="autoFit"/> = false to opt out (e.g. for fields where the original fixed size must
+    /// be preserved verbatim, such as printed monetary amounts).
     /// </summary>
     public void Text(double leftRl, double topRl, double widthRl, double heightRl, string? text,
-        DacteFont font, TextAlign align = TextAlign.Left, PdfColor? color = null)
+        DacteFont font, TextAlign align = TextAlign.Left, PdfColor? color = null, bool autoFit = true)
     {
         if (string.IsNullOrEmpty(text)) return;
         var x = AbsXPt(leftRl);
         var w = Layout.Pt(widthRl);
         var boxTop = AbsYTopDownPt(topRl);
 
-        var textWidth = AfmWidths.MeasureWidthPt(font.Font, text, font.SizePt);
+        var sizePt = font.SizePt;
+        var textWidth = AfmWidths.MeasureWidthPt(font.Font, text, sizePt);
+
+        if (autoFit && textWidth > w && w > 0)
+        {
+            // First try shrinking the font proportionally, down to a still-legible floor.
+            var scale = Math.Max(MinAutoFitScale, w / textWidth);
+            sizePt = font.SizePt * scale;
+            textWidth = AfmWidths.MeasureWidthPt(font.Font, text, sizePt);
+
+            // If it still doesn't fit even at the minimum scale, fall back to ellipsis truncation
+            // at that same minimum size rather than overflowing into the next field.
+            if (textWidth > w)
+            {
+                text = AfmWidths.TruncateWithEllipsis(font.Font, text, sizePt, w);
+                textWidth = AfmWidths.MeasureWidthPt(font.Font, text, sizePt);
+            }
+        }
+
         var textX = align switch
         {
             TextAlign.Center => x + (w - textWidth) / 2.0,
@@ -89,21 +117,82 @@ public sealed class ReportCanvas
         };
 
         // Top-anchored: nudge the baseline down by ~0.8em from the box's top edge, which is roughly
-        // where a single line of text sits at the top of a Delphi label/memo control.
+        // where a single line of text sits at the top of a Delphi label/memo control. Anchored on the
+        // *requested* font size (not the possibly-shrunk one) so auto-fit text doesn't visually shift.
         var baselineTopDown = boxTop + font.SizePt * 0.8;
-        Page.DrawText(textX, ToPdfY(baselineTopDown), text, font.Font, font.SizePt, color ?? PdfColor.Black);
+        Page.DrawText(textX, ToPdfY(baselineTopDown), text, font.Font, sizePt, color ?? PdfColor.Black);
     }
 
-    /// <summary>Draws several lines of left-anchored text starting at the box's top, one under another (TRLMemo equivalent).</summary>
+    /// <summary>
+    /// Draws several lines of left-anchored text starting at the box's top, one under another (TRLMemo
+    /// equivalent). Each entry in <paramref name="lines"/> is treated as a logical paragraph/row and is
+    /// word-wrapped to fit <paramref name="widthRl"/> before being drawn, so a single long value (a long
+    /// observação, an unusually long razão social, etc.) grows downward into extra physical lines instead
+    /// of overflowing sideways past the box's right edge. Pass <paramref name="wrap"/> = false to restore
+    /// the previous one-input-line-per-output-line behaviour for callers that already pre-wrap their text
+    /// or that rely on fixed columns (e.g. right-aligned numeric columns) not reflowing.
+    /// </summary>
     public void Memo(double leftRl, double topRl, double widthRl, IEnumerable<string> lines, DacteFont font,
-        TextAlign align = TextAlign.Left, PdfColor? color = null, double lineHeightRl = 12)
+        TextAlign align = TextAlign.Left, PdfColor? color = null, double lineHeightRl = 12, bool wrap = true)
     {
+        var widthPt = Layout.Pt(widthRl);
         double t = topRl;
         foreach (var line in lines)
         {
-            Text(leftRl, t, widthRl, lineHeightRl, line, font, align, color);
+            if (wrap && !string.IsNullOrEmpty(line))
+            {
+                foreach (var wrapped in AfmWidths.WordWrap(font.Font, line, font.SizePt, widthPt))
+                {
+                    // autoFit: false - a wrapped physical line already fits by construction, so any
+                    // residual mismatch (e.g. from mixed-width glyphs) should never trigger shrinking.
+                    Text(leftRl, t, widthRl, lineHeightRl, wrapped, font, align, color, autoFit: false);
+                    t += lineHeightRl;
+                }
+            }
+            else
+            {
+                Text(leftRl, t, widthRl, lineHeightRl, line, font, align, color, autoFit: false);
+                t += lineHeightRl;
+            }
+        }
+    }
+
+    /// <summary>
+    /// How many lines <paramref name="text"/> would take if drawn with <see cref="TextWrapped"/> at this
+    /// width/font, capped at <paramref name="maxLines"/>. Empty/null text counts as 1 (a field with no
+    /// value still reserves its normal single-line row - it just doesn't grow). Callers use this to decide
+    /// how much extra vertical space a row needs *before* drawing anything in it (e.g. when two side-by-side
+    /// fields, like Remetente/Destinatário, must stay row-aligned and so need the same extra space applied
+    /// to whichever one wrapped more).
+    /// </summary>
+    public int CountWrappedLines(string? text, double widthRl, DacteFont font, int maxLines = 2)
+    {
+        if (string.IsNullOrEmpty(text)) return 1;
+        var n = AfmWidths.WordWrap(font.Font, text, font.SizePt, Layout.Pt(widthRl), maxLines).Count;
+        return Math.Max(1, n);
+    }
+
+    /// <summary>
+    /// Draws up to <paramref name="maxLines"/> lines of word-wrapped text at the font's *original* size -
+    /// unlike <see cref="Text"/>'s auto-fit, this never shrinks the font to make text fit; instead it grows
+    /// downward into extra lines. Meant for fields like razão social / endereço where shrinking the font
+    /// looks inconsistent next to the rest of the (fixed-size) form, and the caller has already made room
+    /// for the extra line(s) - see <see cref="CountWrappedLines"/>. Returns how many lines were drawn.
+    /// </summary>
+    public int TextWrapped(double leftRl, double topRl, double widthRl, double lineHeightRl, string? text,
+        DacteFont font, TextAlign align = TextAlign.Left, PdfColor? color = null, int maxLines = 2)
+    {
+        if (string.IsNullOrEmpty(text)) return 1;
+        var lines = AfmWidths.WordWrap(font.Font, text, font.SizePt, Layout.Pt(widthRl), maxLines);
+        if (lines.Count == 0) return 1;
+
+        double t = topRl;
+        foreach (var line in lines)
+        {
+            Text(leftRl, t, widthRl, lineHeightRl, line, font, align, color, autoFit: false);
             t += lineHeightRl;
         }
+        return lines.Count;
     }
 
     public void Line(double x1Rl, double y1Rl, double x2Rl, double y2Rl, double lineWidthPt = 0.75, PdfColor? color = null)

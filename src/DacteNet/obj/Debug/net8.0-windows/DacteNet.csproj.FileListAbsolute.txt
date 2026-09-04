@@ -1,0 +1,14 @@
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\bin\Debug\net8.0-windows\DacteNet.deps.json
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\bin\Debug\net8.0-windows\DacteNet.dll
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\bin\Debug\net8.0-windows\DacteNet.pdb
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\bin\Debug\net8.0-windows\DacteNet.xml
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Debug\net8.0-windows\DacteNet.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Debug\net8.0-windows\DacteNet.AssemblyInfoInputs.cache
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Debug\net8.0-windows\DacteNet.AssemblyInfo.cs
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Debug\net8.0-windows\DacteNet.csproj.CoreCompileInputs.cache
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Debug\net8.0-windows\DacteNet.sourcelink.json
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Debug\net8.0-windows\DacteNet.dll
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Debug\net8.0-windows\refint\DacteNet.dll
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Debug\net8.0-windows\DacteNet.xml
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Debug\net8.0-windows\DacteNet.pdb
+C:\Users\luan\Documents\1 - Desenvolvimento Aplicativos\4 - Bibliotecas\DacteNet\src\DacteNet\obj\Debug\net8.0-windows\ref\DacteNet.dll

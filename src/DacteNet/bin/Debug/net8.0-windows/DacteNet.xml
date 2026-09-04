@@ -1,0 +1,640 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>DacteNet</name>
+    </assembly>
+    <members>
+        <member name="T:DacteNet.Dacte">
+             <summary>
+             Public entry point of the library: turns a CT-e XML document into a DACTE PDF.
+            
+             Pipeline: <see cref="T:DacteNet.Xml.CteXmlParser"/> (XML -&gt; <see cref="T:DacteNet.Models.CteDocument"/>) -&gt;
+             <see cref="T:DacteNet.ViewModel.DacteViewModelBuilder"/> (business rules -&gt; <see cref="T:DacteNet.ViewModel.DacteViewModel"/>) -&gt;
+             <see cref="T:DacteNet.Rendering.A4.DacteA4Renderer"/> or <see cref="T:DacteNet.Rendering.A5.DacteA5Renderer"/> (layout -&gt; PDF bytes), all built
+             from scratch with zero third-party NuGet dependencies (see docs/README.md "Why a hand-written PDF
+             engine" for the rationale).
+            
+             Usage:
+             <code>
+             var pdfBytes = new Dacte().GerarPdfBytes(xml);
+             new Dacte().GerarPdf(xml, "dacte.pdf");
+             </code>
+             </summary>
+        </member>
+        <member name="M:DacteNet.Dacte.GerarPdfBytes(System.String)">
+            <summary>Parses the CT-e XML and renders the DACTE PDF, returning the raw PDF bytes.</summary>
+        </member>
+        <member name="M:DacteNet.Dacte.GerarPdf(System.String,System.String)">
+            <summary>Parses the CT-e XML and writes the rendered DACTE PDF to <paramref name="path"/>.</summary>
+        </member>
+        <member name="M:DacteNet.Dacte.GerarPdf(System.String,System.IO.Stream)">
+            <summary>Parses the CT-e XML and writes the rendered DACTE PDF to <paramref name="stream"/>.</summary>
+        </member>
+        <member name="T:DacteNet.DacteOptions">
+            <summary>
+            Print-time configuration - the C# equivalent of the properties ACBr keeps on the DACTE *component*
+            (TACBrCTeDACTeRL/TACBrCTeDACTEFR) rather than on the CT-e document itself: operator/software
+            preferences, not data that comes from the XML (see retrato_layout.md §7, last bullet). None of this
+            is read from the CT-e XML.
+            </summary>
+        </member>
+        <member name="P:DacteNet.DacteOptions.Protocolo">
+            <summary>Overrides the "protocolo de autorização" text shown - normally left null so the value from procCTe/XML is used.</summary>
+        </member>
+        <member name="P:DacteNet.DacteOptions.Cancelada">
+            <summary>Forces the "CT-e CANCELADO" banner even if the XML/protocol doesn't itself say so (mirrors ACBr's own Cancelada flag).</summary>
+        </member>
+        <member name="P:DacteNet.DacteOptions.Sistema">
+            <summary>Name of the emitting application/system, printed in the footer strip.</summary>
+        </member>
+        <member name="P:DacteNet.DacteOptions.Logo">
+            <summary>Issuer logo - JPEG only (see PdfImage.FromJpegBytes and docs/limitations.md).</summary>
+        </member>
+        <member name="P:DacteNet.DacteOptions.MarcaDeAgua">
+            <summary>Optional custom full-bleed watermark image drawn behind the "Dados do DACTE" block (independent of the homologação text watermark).</summary>
+        </member>
+        <member name="T:DacteNet.Models.InformacoesCarga">
+            <summary>infCTeNorm/infCarga (or the CT-e-Simplificado top-level infCarga).</summary>
+        </member>
+        <member name="T:DacteNet.Models.DocumentoNFPapel">
+            <summary>infDoc/infNF - documento fiscal em papel (NF modelo 1/1A ou avulsa/produtor).</summary>
+        </member>
+        <member name="T:DacteNet.Models.DocumentoNFe">
+            <summary>infDoc/infNFe - NF-e vinculada (referenciada pela chave de 44 dígitos).</summary>
+        </member>
+        <member name="T:DacteNet.Models.DocumentoOutros">
+            <summary>infDoc/infOutros - outros documentos (declaração, CF-e SAT, NFC-e, dutoviário, outros).</summary>
+        </member>
+        <member name="T:DacteNet.Models.DocumentosOriginarios">
+            <summary>infCTeNorm/infDoc - documentos originários transportados.</summary>
+        </member>
+        <member name="T:DacteNet.Models.Complemento">
+            <summary>infCTe/compl - complemento.</summary>
+        </member>
+        <member name="T:DacteNet.Models.InfoCTeNormal">
+            <summary>
+            infCTeNorm - corpo "normal" do CT-e (usado quando ide.TipoCTe = Normal/Complemento/Anulacao/Substituto).
+            Só um dos sete objetos modais abaixo é relevante por vez, selecionado por Ide.Modal — replica a
+            composição do Pascal (todos os sub-objetos sempre existem; só o que combina com ide/modal é
+            significativo). Ver cte_model.md §2.
+            </summary>
+        </member>
+        <member name="T:DacteNet.Models.CteDocument">
+            <summary>
+            Documento CT-e completo (infCTe), pronto para geração do DACTE. Correspondência com o modelo Pascal
+            TCTe documentada em /home/claude/work/analysis/cte_model.md. Suporta CT-e (modelo 57) e CT-e OS
+            (modelo 67); CT-e Simplificado (modelo 57 com tpCTe Simplificado) e GTVe (modelo 64) NÃO são
+            suportados por esta biblioteca - ver docs/limitations.md.
+            </summary>
+        </member>
+        <member name="P:DacteNet.Models.CteDocument.Id">
+            <summary>Identificador completo do CT-e (atributo Id de infCTe, ex.: "CTe35190512345678000112570010000000011000000015").</summary>
+        </member>
+        <member name="P:DacteNet.Models.CteDocument.ChaveAcesso">
+            <summary>Chave de acesso: os 44 dígitos numéricos de <see cref="P:DacteNet.Models.CteDocument.Id"/>, sem o prefixo literal "CTe".</summary>
+        </member>
+        <member name="P:DacteNet.Models.CteDocument.Tomador">
+            <summary>infCTe/toma - grupo dedicado do tomador (versão &gt;= 3.00 / CT-e OS / CT-e Simplificado).</summary>
+        </member>
+        <member name="P:DacteNet.Models.CteDocument.QrCodeUrl">
+            <summary>infCTeSupl/qrCodCTe - URL para o QR Code impresso no DACTE, quando presente no XML.</summary>
+        </member>
+        <member name="P:DacteNet.Models.CteDocument.Protocolo">
+            <summary>protCTe/infProt - presente apenas quando o XML fornecido está envelopado (cteProc/procCTe). Nulo para um CT-e "bare", ainda sem protocolo.</summary>
+        </member>
+        <member name="T:DacteNet.Models.Endereco">
+            <summary>
+            Generic address block. In the ACBr Pascal model this shape is repeated, with minor variations,
+            as TEndereco / TEnderEmit / TEnderFerro / TLocColeta / TLocEnt (see cte_model.md §2 note 4).
+            Unified here into a single type with nullable extras.
+            </summary>
+        </member>
+        <member name="T:DacteNet.Models.LocalColetaEntrega">
+            <summary>Lightweight pickup/delivery location (locColeta / locEnt) - carries its own party identity.</summary>
+        </member>
+        <member name="T:DacteNet.Models.Toma03">
+            <summary>ide/toma03 or ide/toma3 or ide/toma (legacy shape: tomador is simply one of the four cargo-chain parties).</summary>
+        </member>
+        <member name="T:DacteNet.Models.Toma4">
+            <summary>ide/toma4 (legacy shape used when the tomador is "Outros" - a party not otherwise on the CT-e).</summary>
+        </member>
+        <member name="T:DacteNet.Models.Identificacao">
+            <summary>infCTe/ide - identificação do CT-e.</summary>
+        </member>
+        <member name="T:DacteNet.Models.Icms">
+            <summary>
+            Unified ICMS payload. Only the fields relevant to the CST actually in effect (<see cref="P:DacteNet.Models.Icms.SituacaoTributaria"/>)
+            are populated by the XML parser; the rest stay null. This mirrors the ACBr Pascal model, which keeps one
+            sub-record per CST group permanently instantiated but meaningfully populates only the one matching the CST
+            (see cte_model.md §2 and the CarregaCalculoImposto excerpt in fastreport_crosscheck.md §2.2).
+            </summary>
+        </member>
+        <member name="T:DacteNet.Models.ModalRodoviario">
+            <summary>infCTeNorm/rodo - modal Rodoviário (padrão, não-OS).</summary>
+        </member>
+        <member name="T:DacteNet.Models.ModalRodoviarioOS">
+            <summary>infCTeNorm/rodoOS - modal Rodoviário, exclusivo para CT-e OS (modelo 67).</summary>
+        </member>
+        <member name="T:DacteNet.Models.ModalAereo">
+            <summary>infCTeNorm/aereo - modal Aéreo.</summary>
+        </member>
+        <member name="T:DacteNet.Models.ModalAquaviario">
+            <summary>infCTeNorm/aquav - modal Aquaviário.</summary>
+        </member>
+        <member name="T:DacteNet.Models.ModalFerroviario">
+            <summary>infCTeNorm/ferrov - modal Ferroviário.</summary>
+        </member>
+        <member name="T:DacteNet.Models.ModalDutoviario">
+            <summary>infCTeNorm/duto - modal Dutoviário.</summary>
+        </member>
+        <member name="T:DacteNet.Models.ModalMultimodal">
+            <summary>infCTeNorm/multimodal.</summary>
+        </member>
+        <member name="T:DacteNet.Models.Cobranca">
+            <summary>infCTeNorm/cobr - fatura/duplicatas (pouco usado no DACTE mas mantido para fidelidade).</summary>
+        </member>
+        <member name="T:DacteNet.Models.InfoCteSubstituto">
+            <summary>infCTeNorm/infCTeSub - dados do CT-e sendo substituído.</summary>
+        </member>
+        <member name="T:DacteNet.Models.InfoCteComplementado">
+            <summary>chave(s) do(s) CT-e complementado(s) (tpCTe = Complemento) - infCteComp (&lt;=3.00, único) / infCteComp10 (&gt;=4.00, lista).</summary>
+        </member>
+        <member name="T:DacteNet.Models.InfoCteAnulado">
+            <summary>infCTeAnu - CT-e sendo anulado (tpCTe = Anulacao).</summary>
+        </member>
+        <member name="T:DacteNet.Models.ResponsavelTecnico">
+            <summary>infRespTec - responsável técnico (software house). Não impresso na maioria dos layouts do DACTE.</summary>
+        </member>
+        <member name="T:DacteNet.Models.ProtocoloAutorizacao">
+            <summary>protCTe/infProt - protocolo de autorização (só existe quando o XML está envelopado em cteProc/procCTe).</summary>
+        </member>
+        <member name="T:DacteNet.Models.TomadorServico">
+            <summary>Tomador do serviço, quando lido do grupo dedicado &lt;toma&gt; (versão &gt;= 3.00 / CT-e OS / CT-e Simplificado).</summary>
+        </member>
+        <member name="T:DacteNet.Models.ValorPrestacao">
+            <summary>infCTe/vPrest - valor da prestação do serviço.</summary>
+        </member>
+        <member name="T:DacteNet.Rendering.A4.DacteA4Renderer">
+             <summary>
+             Renders a <see cref="T:DacteNet.ViewModel.DacteViewModel"/> onto an A4 page, reproducing (band by band, in the exact
+             print order documented in analysis/retrato_layout.md §2) the layout of ACBrCTeDACTeRLRetrato.pas
+             (the "TfrmDACTeRLRetrato" Fortes Report Lite form). Coordinates passed to <see cref="T:DacteNet.Rendering.Primitives.ReportCanvas"/>
+             are the *same raw design units* used throughout retrato_layout.md's component tables (1 raw unit =
+             0.75pt, see <see cref="T:DacteNet.Rendering.Primitives.Layout"/>), so each drawing call below can be checked directly against a row
+             of that table.
+            
+             Structural note carried over from the original: every band in the source report is a Fortes
+             "header" band (there is no real repeating detail band) - the whole page is a fixed sequence of
+             bands shown/hidden by resizing to Height=0, and the *only* band with real multi-page pagination is
+             "Documentos Originários" (see <see cref="M:DacteNet.Rendering.A4.DacteA4Renderer.RenderDocumentosOriginarios(DacteNet.Rendering.Primitives.ReportCanvas,DacteNet.ViewModel.DacteViewModel)"/>). This renderer mirrors that:
+             every band below is drawn once, top to bottom, and <see cref="M:DacteNet.Rendering.A4.DacteA4Renderer.EnsureSpace(DacteNet.Rendering.Primitives.ReportCanvas,System.Double)"/> is only a safety-net
+             page break for the (atypical) case where a CT-e's combined content does not fit on one page - the
+             original's own pagination guards (`PrintIt:=PageNumber=1`) mean that in ACBr itself this essentially
+             never needs to happen except for the documentos-originários overflow.
+            
+             Known simplifications (see docs/limitations.md for the complete list):
+              - Purely decorative grid/divider lines (<c>TRLDraw</c> without any runtime logic) are reproduced for
+                the primary borders and column dividers of each band, but not exhaustively for every minor
+                hairline in the very dense vale-pedágio/tabular bands - the data itself is always positioned
+                faithfully; only some non-load-bearing ruling lines are pragmatically omitted.
+              - The alternate "barra" (strip) canhoto layout (<see cref="P:DacteNet.DacteOptions.LayoutCanhoto"/> =
+                <see cref="F:DacteNet.LayoutCanhoto.Barra"/>) is not implemented separately; the standard canhoto layout is
+                used regardless of this option.
+             </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.A4.DacteA4Renderer.F(System.Double,System.Boolean)">
+            <summary>Times New Roman is used throughout the original; DacteFonts.TimesNewRoman maps it onto the closest standard-14 font (Times-Roman/Times-Bold).</summary>
+        </member>
+        <member name="M:DacteNet.Rendering.A4.DacteA4Renderer.EnsureSpace(DacteNet.Rendering.Primitives.ReportCanvas,System.Double)">
+            <summary>Forces a new page if the next band would not fit in the remaining space on the current one.</summary>
+        </member>
+        <member name="M:DacteNet.Rendering.A4.DacteA4Renderer.RenderModaisEspecificos(DacteNet.Rendering.Primitives.ReportCanvas,DacteNet.ViewModel.DacteViewModel)">
+            <summary>Dispatches to whichever single modal-specific block applies (mutually exclusive per Ide.Modal).</summary>
+        </member>
+        <member name="F:DacteNet.Rendering.A4.DacteA4Renderer.TextoRecebemosDe">
+            <summary>
+            Standard canhoto ("recibo de entrega") declaration text. The exact wording is not quoted
+            verbatim in retrato_layout.md (it only documents the label's position/font, not its default
+            caption's text) - this is the standard boilerplate text used on Brazilian CT-e/DACTE receipts,
+            used here as a documented best-effort stand-in. See docs/limitations.md.
+            </summary>
+        </member>
+        <member name="T:DacteNet.Rendering.A5.DacteA5Renderer">
+             <summary>
+             Renders a <see cref="T:DacteNet.ViewModel.DacteViewModel"/> onto the "simplified" A5 DACTE layout, reproducing
+             ACBrCTeDACTeRLRetratoA5.pas (analysis/retrato_a5_layout.md) - a landscape A5 sheet
+             (210mm x 148mm; standard A5 portrait rotated sideways), band-by-band in the same design-unit
+             coordinate system as <see cref="T:DacteNet.Rendering.A4.DacteA4Renderer"/> (1 raw unit = 0.75pt).
+            
+             Scope note (see docs/limitations.md): this renderer covers every band that carries CT-e data
+             (canhoto, cabeçalho, dados do DACTE, dados da nota fiscal/ICMS, valor da prestação, documentos
+             originários with its own pagination, observações + RNTRC/CIOT/lotação + status watermark,
+             rodapé). The road-modal "lotação" vale-pedágio table (rlb_11_ModRodLot104) and the
+             aéreo/aquaviário specialty blocks that exist in the A4 layout are not present in ACBr's own A5
+             report in the analyzed source's most detail-rich form and were not fully re-derived here given the
+             scope of this pass - they are intentionally omitted from the A5 output (A4 is the recommended
+             paper size for CT-e's using those modals).
+             </summary>
+        </member>
+        <member name="T:DacteNet.Rendering.Barcode.Code128Encoder">
+            <summary>
+            Encodes numeric strings as Code 128 (ISO/IEC 15417) using Code Set C - two decimal digits per
+            symbol - which is the standard, most compact choice for all-numeric data such as the CT-e/NF-e
+            44-digit access key (this matches ACBr's own bcCode128C barcode type used on the printed DACTE).
+            </summary>
+        </member>
+        <member name="F:DacteNet.Rendering.Barcode.Code128Encoder.Patterns">
+            <summary>
+            The full Code 128 symbol-to-bar-pattern table (values 0-106), each entry giving the widths (in
+            modules, 1-4) of six alternating bar/space/bar/space/bar/space elements - except entry 106
+            (STOP), which has a seventh element: the mandatory trailing termination bar. This is the
+            standard, public ISO/IEC 15417 pattern table reproduced identically by every Code 128
+            implementation (e.g. ZXing's Code128Reader.CODE_PATTERNS).
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Barcode.Code128Encoder.EncodeModules(System.String)">
+            <summary>
+            Encodes an all-numeric string using Code 128 Code Set C. Returns the module-width pattern as a
+            flat sequence of run lengths (in modules), starting with a black bar and alternating
+            black/white thereafter, including the start pattern, checksum symbol, and stop pattern (with
+            its trailing termination bar). Quiet-zone whitespace margins are the caller's responsibility.
+            </summary>
+        </member>
+        <member name="T:DacteNet.Rendering.Primitives.AfmWidths">
+             <summary>
+             Character-width tables (in 1/1000 em units, i.e. AFM convention) for the four non-monospace
+             standard-14 fonts this library uses: Helvetica, Helvetica-Bold, Times-Roman and Times-Bold.
+             These are the genuine Adobe Core-14 AFM glyph metrics, addressed by the actual Unicode character
+             that WinAnsiEncoding (~= cp1252 / Latin-1) maps each 0x20-0xFF code point to. Because Latin-1
+             Supplement (U+00A0-U+00FF) is numerically identical to cp1252 at those same positions, indexing
+             by the real character (rather than by a raw byte) covers the whole 0x20-0xFF WinAnsi range and,
+             as a bonus, also covers the handful of cp1252 0x80-0x9F "special" glyphs (curly quotes, dashes,
+             ellipsis, Euro sign, etc.) via their real Unicode code points (e.g. U+2014 em dash), which is what
+             actually shows up in .NET strings - the raw C1-control-range code points 0x80-0x9F themselves
+             never appear in real text and are not meaningfully distinct glyphs.
+            
+             Values are the public, standard Adobe Core-14 AFM widths (the same numbers reproduced identically
+             in every PDF library's AFM resources - PDFBox, iText, ghostscript, matplotlib, pdf.js, etc.) - this
+             is specification data, not copyrighted creative expression. Accented Latin letters share the
+             advance width of their unaccented base letter, which is how these fonts are actually constructed
+             (Aacute has the same width as A, eacute the same as e, and so on) - a reliable, well-established
+             pattern used throughout the tables below.
+             </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.AfmWidths.WordWrap(DacteNet.Rendering.Primitives.PdfStandardFont,System.String,System.Double,System.Double)">
+            <summary>
+            Breaks <paramref name="text"/> into the fewest lines that each fit within <paramref name="maxWidthPt"/>,
+            wrapping on spaces (normal word-wrap). A single "word" that is wider than the box on its own is
+            hard-split character by character instead of being left to overflow - this covers pathological cases
+            like an unbroken CNPJ/CPF-less free-text field, a long e-mail address, or a run-on word typed without
+            spaces, all of which show up in real CT-e XML free-text fields (observações, razão social, endereço).
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.AfmWidths.TruncateWithEllipsis(DacteNet.Rendering.Primitives.PdfStandardFont,System.String,System.Double,System.Double)">
+            <summary>
+            Truncates <paramref name="text"/> with a trailing "..." so it fits within <paramref name="maxWidthPt"/>,
+            for single-line boxes that must not wrap or grow (e.g. a one-line label control). Returns the original
+            text unchanged if it already fits.
+            </summary>
+        </member>
+        <member name="T:DacteNet.Rendering.Primitives.DacteFont">
+            <summary>
+            Maps the three Delphi font families the original DACTE layout uses (retrato_layout.md §1: "Times New
+            Roman" for almost all body text, "Arial" for the canhoto date/time placeholders and the "barra" strip
+            canhoto, "Courier New" for a handful of memos) onto their closest standard-14 PDF equivalents.
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.DacteFont.TimesNewRoman(System.Double,System.Boolean)">
+            <summary>sizePt should be the already-converted point size (|Font.Height| * 0.75, per retrato_layout.md §1).</summary>
+        </member>
+        <member name="T:DacteNet.Rendering.Primitives.Layout">
+            <summary>
+            Unit conversion helpers. The ACBrCTe "Fortes Report Lite" .dfm layout uses one raw design unit
+            approx equal to 1/96 inch (see /home/claude/work/analysis/retrato_layout.md §1, "Conversion-factor
+            verification" - confirmed with high confidence against the 742-unit band width matching the A4
+            printable area). PDF points are 1/72 inch, so 1 raw RL unit = 0.75pt exactly.
+            </summary>
+        </member>
+        <member name="T:DacteNet.Rendering.Primitives.PdfDocument">
+            <summary>
+            A minimal, dependency-free PDF writer: just enough of the PDF 1.4 object model (catalog, page tree,
+            pages, uncompressed content streams, standard-14 fonts, DCTDecode image XObjects) to render the
+            DACTE. See docs/README.md "Why a hand-written PDF writer" for the rationale.
+            </summary>
+        </member>
+        <member name="T:DacteNet.Rendering.Primitives.PdfImage">
+            <summary>
+            A JPEG image ready to be embedded as a PDF XObject via direct DCTDecode passthrough - i.e. the
+            original JPEG byte stream is copied into the PDF unchanged (no re-encoding, no dependency on an
+            imaging library). Width/height/component-count are read directly from the JPEG's own SOF marker.
+            PNG or other formats are intentionally not supported without an extra conversion step by the
+            caller (see docs/limitations.md) - the issuer logo is a print-configuration concern, not CT-e data,
+            so this is a deliberately narrow feature.
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.PdfImage.FromJpegBytes(System.Byte[])">
+            <summary>Parses a raw JPEG byte stream (as produced by any standard encoder) for embedding.</summary>
+        </member>
+        <member name="T:DacteNet.Rendering.Primitives.PdfPage">
+            <summary>
+            One PDF page. All drawing methods use true PDF coordinate space: origin at the bottom-left corner,
+            y increasing upward, units in points (1/72 inch). Higher-level code (<see cref="T:DacteNet.Rendering.Primitives.ReportCanvas"/>)
+            is responsible for converting the DACTE layout's top-down, band-relative coordinates into this space.
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.PdfPage.StrokeRectSides(System.Double,System.Double,System.Double,System.Double,System.Double,DacteNet.Rendering.Primitives.PdfColor,DacteNet.Rendering.Primitives.BorderSides)">
+            <summary>Strokes only the requested sides of a rectangle whose bottom-left corner is (x,y).</summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.PdfPage.DrawText(System.Double,System.Double,System.String,DacteNet.Rendering.Primitives.PdfStandardFont,System.Double,DacteNet.Rendering.Primitives.PdfColor)">
+            <summary>Draws a single line of left-anchored text with its baseline at (x,y).</summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.PdfPage.DrawImage(DacteNet.Rendering.Primitives.PdfImage,System.Double,System.Double,System.Double,System.Double)">
+            <summary>Draws a JPEG image (DCTDecode passthrough - see <see cref="T:DacteNet.Rendering.Primitives.PdfImage"/>) into the given box, bottom-left corner (x,y).</summary>
+        </member>
+        <member name="T:DacteNet.Rendering.Primitives.PdfStandardFont">
+            <summary>
+            One of the 14 standard PDF fonts. No embedding is required for these - every PDF viewer/printer
+            ships them - which is why this library has no font-file dependency at all. They are used to
+            approximate the three font families the original ACBr DACTE layout uses (see retrato_layout.md §1):
+            Times New Roman -&gt; Times-Roman/Bold, Arial -&gt; Helvetica/Bold, Courier New -&gt; Courier/Bold.
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.PdfStandardFontExtensions.ResourceName(DacteNet.Rendering.Primitives.PdfStandardFont)">
+            <summary>PDF resource name used inside content streams, e.g. "/FHelvetica".</summary>
+        </member>
+        <member name="T:DacteNet.Rendering.Primitives.ReportCanvas">
+             <summary>
+             Draws using the exact same coordinate convention as the extracted ACBrCTe layout tables
+             (retrato_layout.md / retrato_a5_layout.md "L,T,W,H (raw)" columns): every geometry argument is a
+             raw Fortes-Report-Lite design unit (1 unit = 0.75pt, see <see cref="T:DacteNet.Rendering.Primitives.Layout"/>), relative to the
+             *current band's* own top-left origin - exactly like a Delphi child control's Left/Top is relative to
+             its parent band. This lets band-rendering code transcribe a table row almost verbatim, e.g. for
+             `rllNumCTe2` at raw (636,35,86,16): <c>canvas.Text(636, 35, 86, 16, numero, font)</c>.
+            
+             Vertical stacking of bands (and page breaks) is handled by whichever renderer owns the canvas
+             (see Rendering/A4/DacteA4Renderer.cs) via <see cref="M:DacteNet.Rendering.Primitives.ReportCanvas.AdvanceBand(System.Double)"/>/<see cref="M:DacteNet.Rendering.Primitives.ReportCanvas.NewPage"/> - this class
+             only knows about "the current band's absolute page position", not about band order/visibility rules,
+             which are business/layout decisions that belong to the ViewModel and renderer respectively.
+             </summary>
+        </member>
+        <member name="P:DacteNet.Rendering.Primitives.ReportCanvas.BandTopPt">
+            <summary>Absolute distance from the top of the page (in points) where the current band's raw-unit Top=0 sits.</summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.NewPage">
+            <summary>Starts a new physical page and resets the band cursor to the top margin.</summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.AdvanceBand(System.Double)">
+            <summary>Moves the band cursor down by the given band height (raw units) - call after finishing a band.</summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.SetBandTopPt(System.Double)">
+            <summary>Explicitly sets the absolute band-cursor position (points from top of page) - for advanced pagination.</summary>
+        </member>
+        <member name="F:DacteNet.Rendering.Primitives.ReportCanvas.MinAutoFitScale">
+            <summary>Smallest fraction of the requested font size that auto-fit is allowed to shrink to before falling back to ellipsis truncation.</summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.Text(System.Double,System.Double,System.Double,System.Double,System.String,DacteNet.Rendering.Primitives.DacteFont,DacteNet.Rendering.Primitives.TextAlign,System.Nullable{DacteNet.Rendering.Primitives.PdfColor},System.Boolean)">
+             <summary>
+             Draws a single line of text inside the given band-relative box, top-anchored (like the original
+             Delphi <c>TRLLabel</c>/<c>TRLMemo</c> controls this mirrors: their box height is typically just
+             slightly taller than one text line, for visual padding, not meant to vertically center text in a
+             much-taller box - a handful of DACTE fields use noticeably tall boxes, e.g. the 19-raw-unit-tall
+             municipality box in rlb_03_DadosDACTe, and centering there visibly collided with the row below).
+            
+             If <paramref name="text"/> is too wide for the box, it is first shrunk (down to
+             <see cref="F:DacteNet.Rendering.Primitives.ReportCanvas.MinAutoFitScale"/> of the requested size) to try to keep it on one line without
+             overflowing into neighbouring fields; if it still doesn't fit at the minimum size it is truncated
+             with a trailing "..." instead of being left to spill over the box's edges. Pass
+             <paramref name="autoFit"/> = false to opt out (e.g. for fields where the original fixed size must
+             be preserved verbatim, such as printed monetary amounts).
+             </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.Memo(System.Double,System.Double,System.Double,System.Collections.Generic.IEnumerable{System.String},DacteNet.Rendering.Primitives.DacteFont,DacteNet.Rendering.Primitives.TextAlign,System.Nullable{DacteNet.Rendering.Primitives.PdfColor},System.Double,System.Boolean)">
+            <summary>
+            Draws several lines of left-anchored text starting at the box's top, one under another (TRLMemo
+            equivalent). Each entry in <paramref name="lines"/> is treated as a logical paragraph/row and is
+            word-wrapped to fit <paramref name="widthRl"/> before being drawn, so a single long value (a long
+            observação, an unusually long razão social, etc.) grows downward into extra physical lines instead
+            of overflowing sideways past the box's right edge. Pass <paramref name="wrap"/> = false to restore
+            the previous one-input-line-per-output-line behaviour for callers that already pre-wrap their text
+            or that rely on fixed columns (e.g. right-aligned numeric columns) not reflowing.
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.Barcode128(System.Double,System.Double,System.Double,System.Double,System.String)">
+            <summary>Renders a Code128 barcode (Code Set C, i.e. two decimal digits per symbol - the digitsOnly string must have even length) into the given box.</summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.QrCode(System.Double,System.Double,System.Double,System.String)">
+            <summary>Renders a QR Code (drawn as vector filled squares - no raster image involved) into the given box.</summary>
+        </member>
+        <member name="T:DacteNet.Rendering.Primitives.WinAnsiEncoding">
+            <summary>
+            Minimal Windows-1252 ("WinAnsiEncoding" in PDF terms) text encoder, written by hand so the library
+            has no dependency on the System.Text.Encoding.CodePages package. Code points 0x00-0x7F are plain
+            ASCII; 0xA0-0xFF are numerically identical between Unicode and cp1252 (both equal Latin-1 there), which
+            covers every accented character CT-e/DACTE text needs (À-ÿ). Only the 0x80-0x9F block differs from
+            Unicode and is covered by <see cref="F:DacteNet.Rendering.Primitives.WinAnsiEncoding.SpecialsMap"/> (smart quotes, dashes, €, etc.) purely so those
+            characters degrade gracefully instead of throwing; CT-e content essentially never uses them.
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.WinAnsiEncoding.ToPdfLiteralBytes(System.String)">
+            <summary>Escapes a string for use inside a PDF literal string "( ... )" token, encoding to WinAnsi bytes first.</summary>
+        </member>
+        <member name="T:DacteNet.Rendering.Qr.GaloisField">
+            <summary>
+            GF(256) arithmetic (primitive polynomial x^8 + x^4 + x^3 + x^2 + 1 = 0x11D) and Reed-Solomon
+            error-correction codeword generation, exactly as specified by ISO/IEC 18004 Annex A. This is
+            the same standard construction used by every QR Code implementation (ZXing, Project Nayuki's
+            "QR Code generator library", qrencode, etc.) - public specification algorithm, not proprietary
+            code.
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Qr.GaloisField.ComputeGeneratorPolynomial(System.Int32)">
+            <summary>
+            Builds the degree-N Reed-Solomon generator polynomial coefficients (monic, highest-degree
+            coefficient implicit as 1 and not stored - this returns the remaining N coefficients, matching
+            the standard "compute divisor" construction: product over i=0..N-1 of (x - alpha^i)).
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Qr.GaloisField.ComputeEccCodewords(System.Byte[],System.Int32)">
+            <summary>
+            Computes the <paramref name="eccCount"/> Reed-Solomon error-correction codewords for one block
+            of data codewords (polynomial long division of the data (shifted by eccCount bytes) modulo the
+            generator polynomial, all arithmetic in GF(256)).
+            </summary>
+        </member>
+        <member name="T:DacteNet.Rendering.Qr.QrEncoder">
+            <summary>
+            A complete, from-scratch QR Code (ISO/IEC 18004) encoder using Byte mode (UTF-8) - sufficient
+            since this library only ever encodes URLs (the CT-e's infCTeSupl/qrCodCTe field). This is the
+            same public, standard algorithm implemented identically by every QR library (ZXing, Project
+            Nayuki's "QR Code generator library", qrencode, etc.) - specification data and algorithm, not
+            proprietary code.
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Qr.QrEncoder.Encode(System.String,DacteNet.Rendering.Qr.QrErrorCorrectionLevel)">
+            <summary>
+            Encodes text as a QR Code, automatically selecting the smallest version (1-40) that fits the
+            data at the requested error-correction level and the best data mask (0-7) by the standard
+            penalty-scoring rules. Returns the final N x N module matrix (true = dark), including all
+            mandatory structural patterns, ready to render as-is. Does NOT include the mandatory quiet
+            zone - that is the caller's responsibility.
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Qr.QrEncoder.BchEncode(System.Int32,System.Int32,System.Int32,System.Int32)">
+            <summary>Systematic BCH encode: returns (data &lt;&lt; degree) | remainder, per ISO/IEC 18004 Annex C/D.</summary>
+        </member>
+        <member name="T:DacteNet.Rendering.Qr.QrVersionTables">
+            <summary>
+            The standard ISO/IEC 18004 per-version, per-error-correction-level tables: total codewords
+            capacity of the symbol, the number of Reed-Solomon blocks, and the number of EC codewords per
+            block. From these three numbers the exact data/EC block structure (group 1 / group 2 split) is
+            derived algorithmically (see <see cref="T:DacteNet.Rendering.Qr.QrEncoder"/>) rather than tabulated directly, exactly as
+            permitted by the spec's own block-count formula. Also carries the alignment-pattern center
+            coordinate table and the per-version "remainder bits" count. These are the same public numbers
+            reproduced identically in every QR Code implementation (ZXing's Version.java, Nayuki's
+            qrcodegen, qrencode, etc.).
+            </summary>
+        </member>
+        <member name="F:DacteNet.Rendering.Qr.QrVersionTables.TotalCodewords">
+            <summary>Total data+EC codewords in the symbol, indexed by version (1-40, index 0 unused).</summary>
+        </member>
+        <member name="F:DacteNet.Rendering.Qr.QrVersionTables.EccCodewordsPerBlock">
+            <summary>EC codewords per block, indexed [level][version] with level order L,M,Q,H (0-3).</summary>
+        </member>
+        <member name="F:DacteNet.Rendering.Qr.QrVersionTables.NumBlocks">
+            <summary>Number of Reed-Solomon blocks, indexed [level][version] with level order L,M,Q,H (0-3).</summary>
+        </member>
+        <member name="F:DacteNet.Rendering.Qr.QrVersionTables.AlignmentPatternPositions">
+            <summary>Alignment pattern center coordinates along one axis, indexed by version (1-40, index 0/1 unused - version 1 has no alignment patterns).</summary>
+        </member>
+        <member name="F:DacteNet.Rendering.Qr.QrVersionTables.RemainderBits">
+            <summary>Number of unused "remainder" bits after the last codeword when placed into the matrix, indexed by version (1-40, index 0 unused).</summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Qr.QrVersionTables.FormatBits(DacteNet.Rendering.Qr.QrErrorCorrectionLevel)">
+            <summary>The 2-bit format-info indicator for each EC level, per ISO/IEC 18004 Table 25.</summary>
+        </member>
+        <member name="T:DacteNet.ViewModel.DacteViewModel">
+            <summary>
+            Flattened, print-ready view of one CT-e, computed by <see cref="T:DacteNet.ViewModel.DacteViewModelBuilder"/> from a
+            <see cref="T:DacteNet.Models.CteDocument"/> plus <see cref="T:DacteNet.DacteOptions"/>. Renderers (Rendering/A4,
+            Rendering/A5) only read from this object and never touch <see cref="T:DacteNet.Models.CteDocument"/> or
+            business rules directly - this is the seam between "what the document means" and "where it is drawn".
+            Field names mirror the ACBr Pascal component names quoted in retrato_layout.md/fastreport_crosscheck.md
+            where practical, to keep the mapping to the reference analysis traceable.
+            </summary>
+        </member>
+        <member name="P:DacteNet.ViewModel.DacteViewModel.TomadorDescricaoTexto">
+            <summary>
+            TpTomadorToStrText(Toma03/Toma4) - who the tomador do serviço is, unconditionally (no v>=3.00
+            "SIM"/"NÃO" globalizado toggle). Used by the A5 renderer's rllTomaServico, which - unlike A4's
+            version-dependent rllTomaServico - always shows this text regardless of versão (confirmed in
+            ACBrCTeDACTeRLRetratoA5.pas: `rllTomaServico.Caption := TpTomadorToStrText(...)`, no version
+            branch at all).
+            </summary>
+        </member>
+        <member name="T:DacteNet.ViewModel.DacteViewModelBuilder">
+             <summary>
+             Maps a parsed <see cref="T:DacteNet.Models.CteDocument"/> (+ print-time <see cref="T:DacteNet.DacteOptions"/>) into the flattened,
+             print-ready <see cref="T:DacteNet.ViewModel.DacteViewModel"/> that the A4/A5 renderers read from. This is the "business
+             rules" layer: every decision here (which field wins, how a value is formatted, when a block is shown)
+             is taken from the rules extracted into analysis/retrato_layout.md §4 (conditional visibility) and §5
+             (calculations/formatting), analysis/fastreport_crosscheck.md §2 (independent cross-check, used
+             especially for the Tomador resolution and canhoto-summary formulas, which are quoted almost verbatim
+             from both files), and the exact `GetTextoResumoCanhoto` quoted from
+             ACBrCTe/DACTE/Fortes/ACBrCTeDACTeRL.pas.
+            
+             Only CT-e (modelo 57) and CT-e OS (modelo 67), tpCTe in [Normal, Complemento, Anulacao, Substituto],
+             are handled - GTVe and CT-e Simplificado are rejected earlier, by <see cref="T:DacteNet.Xml.CteXmlParser"/>.
+            
+             Known simplifications/inferences (see docs/limitations.md for the full list once written):
+              - "Documentos originários" CNPJ/CPF column: ACBr's FastReport variant (`CarregaDadosNotasFiscais`)
+                shows the Remetente's CNPJ/CPF for every paper-NF/NFe/Outros row; the RL variant's own `Itens`
+                procedure is only described narratively in retrato_layout.md §7 (not quoted verbatim), so that
+                same Remetente-CNPJ convention is used here for parity across engines - flagged as an inference.
+              - Legacy (&lt;3.00) "forma de pagamento" (ide/forPag) is not modeled (CteDocument has no such field -
+                an intentional scope simplification, since it's an obsolete field on modern CT-e's) - the header
+                "FORMA DE PAGAMENTO"/"INFORMAÇÕES DO CT-E GLOBALIZADO" slot is therefore only ever populated with
+                the v&gt;=3.00 CT-e Globalizado observation text.
+              - True-contingency mode (`GerarChaveContingencia`) cannot be reproduced - see docs/limitations.md;
+                <see cref="P:DacteNet.ViewModel.DacteViewModel.UsarBarcodeContingencia"/> is still set so a renderer/caller can detect
+                the situation, but <see cref="P:DacteNet.ViewModel.DacteViewModel.BarcodeDigitos"/>/<see cref="P:DacteNet.ViewModel.DacteViewModel.TextoProtocolo"/>
+                are left blank rather than inventing a key.
+              - CST description text (`CSTICMSToStrTagPosText`) and address-mask patterns (`FormatarCNPJ` etc. -
+                already implemented faithfully in <see cref="T:DacteNet.ViewModel.Format"/>) live outside the two analyzed DACTE files;
+                the CST descriptions below are standard SEFAZ CST-table wording, not a verified ACBr string.
+             </summary>
+        </member>
+        <member name="M:DacteNet.ViewModel.DacteViewModelBuilder.BuildEnderecoEmitente(DacteNet.Models.Emitente,DacteNet.DacteOptions)">
+            <summary>
+            Builds the header issuer address block, mirroring rlmDadosEmitente's exact line-by-line
+            composition quoted in retrato_layout.md (rlb_02_Cabecalho): logradouro+número, complemento,
+            bairro, "CEP: x - município - UF", "CNPJ: x", "INSCRIÇÃO ESTADUAL: x", "TELEFONE: x", then
+            optional SITE:/E-MAIL: lines sourced from <see cref="T:DacteNet.DacteOptions"/> (not the XML).
+            </summary>
+        </member>
+        <member name="T:DacteNet.ViewModel.Format">
+            <summary>
+            Text-formatting helpers mirroring ACBr's FormatarCNPJ/FormatarCPF/FormatarCEP/FormatarFone/
+            FormatarChaveAcesso/FormatFloatBr conventions (retrato_layout.md §5 "Masks used" / "CNPJ/CPF/IE/CEP/
+            phone/date formatting" - the exact mask patterns are stated there as "commonly-known ACBr convention,
+            not verified inside the two analyzed files", since the actual helpers live outside ACBrCTe proper).
+            </summary>
+        </member>
+        <member name="M:DacteNet.ViewModel.Format.ChaveAcesso(System.String)">
+            <summary>Groups a 44-digit access key into space-separated blocks of 4, ACBr's FormatarChaveAcesso convention.</summary>
+        </member>
+        <member name="M:DacteNet.ViewModel.Format.Moeda(System.Nullable{System.Decimal},System.Int32)">
+            <summary>Brazilian-locale fixed-decimal formatting - "FormatFloatBr(mskNxM, valor)" equivalent (thousand '.' / decimal ',').</summary>
+        </member>
+        <member name="T:DacteNet.Xml.CteEnumParsers">
+            <summary>
+            String-to-enum conversions mirroring ACBr's StrToXxx helpers in pcteConversaoCTe.pas, using the
+            public CT-e XSD code values (confirmed against cte_model.md §3.1 where ACBr's own source carried the
+            value, and against the official CT-e schema documentation otherwise - see cte_model.md §3.2 for which
+            enums that applies to). Every parser defaults leniently rather than throwing, mirroring ACBr's own
+            "silently default on unknown/missing" behaviour (xml_mapping.md §2/§4) - a genuinely malformed
+            document is expected to have already failed on the two ACBr-style hard checks (missing Id / versao).
+            </summary>
+        </member>
+        <member name="M:DacteNet.Xml.CteEnumParsers.CstIcms(System.String,System.String)">
+            <summary>Maps the ide/ICMS 'CST'/'CSOSN' text (already dispatched to the right group by the caller) to our synthetic CstIcms discriminator.</summary>
+        </member>
+        <member name="T:DacteNet.Xml.CteXmlException">
+            <summary>
+            Thrown when the supplied XML is not a CT-e document this library can render (e.g. GTVe, CT-e
+            Simplificado, or malformed XML missing the mandatory infCTe Id/versao attributes - see
+            xml_mapping.md §5 for the two ACBr-equivalent hard-failure points this mirrors).
+            </summary>
+        </member>
+        <member name="T:DacteNet.Xml.CteXmlParser">
+             <summary>
+             Parses a CT-e XML document (bare &lt;CTe&gt;/&lt;CTeOS&gt;, or enveloped in
+             &lt;cteProc&gt;/&lt;procCTe&gt;/&lt;cteOSProc&gt;/&lt;procCTeOS&gt;) into a <see cref="T:DacteNet.Models.CteDocument"/>.
+            
+             Deliberately built on <see cref="T:System.Xml.Linq.XDocument"/> (a real XML tree) rather than porting ACBr's own
+             substring-search reader (TLeitor) - see xml_mapping.md "Summary for a C# re-implementation" for why.
+             Namespace-agnostic (matches by local element name only), tolerant of either the standard CT-e
+             namespace or none at all.
+            
+             Only CT-e (modelo 57, normal/complemento/anulação/substituto/simplificado is NOT included - see
+             below) and CT-e OS (modelo 67) are supported. GTVe (modelo 64) and CT-e Simplificado
+             (tpCTe Simplificado/SubstitutoSimplificado) are out of scope for this library (see docs/limitations.md)
+             and raise <see cref="T:DacteNet.Xml.CteXmlException"/>.
+             </summary>
+        </member>
+        <member name="T:DacteNet.Xml.XmlHelpers">
+            <summary>
+            Namespace-agnostic helpers for walking the CT-e XML tree by local element name. The official CT-e
+            documents always declare the "http://www.portalfiscal.inf.br/cte" namespace, but (mirroring the
+            tolerant, structure-blind behaviour of ACBr's own substring-search reader documented in
+            xml_mapping.md §1.4) we deliberately match by LocalName only, so a missing/extra/prefixed namespace
+            never breaks parsing.
+            </summary>
+        </member>
+        <member name="M:DacteNet.Xml.XmlHelpers.ChildDateTime(System.Xml.Linq.XElement,System.String)">
+            <summary>CT-e dhEmi/dhRecbto-style values: "yyyy-MM-ddTHH:mm:sszzz" (with UTC offset) - falls back to a bare date.</summary>
+        </member>
+        <member name="M:DacteNet.Xml.XmlHelpers.ChildDate(System.Xml.Linq.XElement,System.String)">
+            <summary>CT-e dEmi/dPrev-style bare-date values: "yyyy-MM-dd".</summary>
+        </member>
+    </members>
+</doc>

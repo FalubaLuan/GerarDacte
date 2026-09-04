@@ -95,9 +95,14 @@ public sealed partial class DacteA4Renderer
         EnsureSpace(canvas, h);
         canvas.Rect(0, 2, 741, 183);
 
-        // --- left block: logo/issuer name+address ---
-        canvas.Text(7, 10, 305, 19, vm.Emitente.RazaoSocial, F(9, true), TextAlign.Center);
-        canvas.Memo(7, 34, 305, vm.Emitente.LinhasEnderecoCompleto, F(6), lineHeightRl: 9);
+        // --- left block: logo/issuer name+address --- (grows into a 2nd line at full size, instead of
+        // shrinking, when the issuer's razão social is too long for the box; the address memo below it
+        // is pushed down by the same amount so it never overlaps).
+        int nomeLinesEmit = canvas.CountWrappedLines(vm.Emitente.RazaoSocial, 305, F(9, true));
+        const double pitchEmit = 12;
+        double yEnderecoEmit = 34 + (nomeLinesEmit - 1) * pitchEmit;
+        canvas.TextWrapped(-2, 10, 305, pitchEmit, vm.Emitente.RazaoSocial, F(9, true), TextAlign.Center);
+        canvas.Memo(7, yEnderecoEmit, 305, vm.Emitente.LinhasEnderecoCompleto, F(6), lineHeightRl: 9);
         canvas.Line(313, 2, 313, 184, 0.5);
 
         // --- title block ---
