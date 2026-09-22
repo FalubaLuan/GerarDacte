@@ -281,6 +281,31 @@
              pattern used throughout the tables below.
              </summary>
         </member>
+        <member name="M:DacteNet.Rendering.Primitives.AfmWidths.WordWrap(DacteNet.Rendering.Primitives.PdfStandardFont,System.String,System.Double,System.Double)">
+            <summary>
+            Breaks <paramref name="text"/> into the fewest lines that each fit within <paramref name="maxWidthPt"/>,
+            wrapping on spaces (normal word-wrap). A single "word" that is wider than the box on its own is
+            hard-split character by character instead of being left to overflow - this covers pathological cases
+            like an unbroken CNPJ/CPF-less free-text field, a long e-mail address, or a run-on word typed without
+            spaces, all of which show up in real CT-e XML free-text fields (observações, razão social, endereço).
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.AfmWidths.WordWrap(DacteNet.Rendering.Primitives.PdfStandardFont,System.String,System.Double,System.Double,System.Int32)">
+            <summary>
+            Same as <see cref="M:DacteNet.Rendering.Primitives.AfmWidths.WordWrap(DacteNet.Rendering.Primitives.PdfStandardFont,System.String,System.Double,System.Double)"/> but caps the result at
+            <paramref name="maxLines"/> lines - if the text needs more than that, everything past the first
+            <paramref name="maxLines"/> - 1 lines is folded back together and ellipsis-truncated onto the last
+            line, so a pathologically long value still only ever occupies a bounded, predictable amount of
+            vertical space (used by fixed-form boxes that can open up to one extra line, but no more).
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.AfmWidths.TruncateWithEllipsis(DacteNet.Rendering.Primitives.PdfStandardFont,System.String,System.Double,System.Double)">
+            <summary>
+            Truncates <paramref name="text"/> with a trailing "..." so it fits within <paramref name="maxWidthPt"/>,
+            for single-line boxes that must not wrap or grow (e.g. a one-line label control). Returns the original
+            text unchanged if it already fits.
+            </summary>
+        </member>
         <member name="T:DacteNet.Rendering.Primitives.DacteFont">
             <summary>
             Maps the three Delphi font families the original DACTE layout uses (retrato_layout.md §1: "Times New
@@ -373,17 +398,54 @@
         <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.SetBandTopPt(System.Double)">
             <summary>Explicitly sets the absolute band-cursor position (points from top of page) - for advanced pagination.</summary>
         </member>
-        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.Text(System.Double,System.Double,System.Double,System.Double,System.String,DacteNet.Rendering.Primitives.DacteFont,DacteNet.Rendering.Primitives.TextAlign,System.Nullable{DacteNet.Rendering.Primitives.PdfColor})">
+        <member name="F:DacteNet.Rendering.Primitives.ReportCanvas.MinAutoFitScale">
+            <summary>Smallest fraction of the requested font size that auto-fit is allowed to shrink to before falling back to ellipsis truncation.</summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.Text(System.Double,System.Double,System.Double,System.Double,System.String,DacteNet.Rendering.Primitives.DacteFont,DacteNet.Rendering.Primitives.TextAlign,System.Nullable{DacteNet.Rendering.Primitives.PdfColor},System.Boolean)">
+             <summary>
+             Draws a single line of text inside the given band-relative box, top-anchored (like the original
+             Delphi <c>TRLLabel</c>/<c>TRLMemo</c> controls this mirrors: their box height is typically just
+             slightly taller than one text line, for visual padding, not meant to vertically center text in a
+             much-taller box - a handful of DACTE fields use noticeably tall boxes, e.g. the 19-raw-unit-tall
+             municipality box in rlb_03_DadosDACTe, and centering there visibly collided with the row below).
+            
+             If <paramref name="text"/> is too wide for the box, it is first shrunk (down to
+             <see cref="F:DacteNet.Rendering.Primitives.ReportCanvas.MinAutoFitScale"/> of the requested size) to try to keep it on one line without
+             overflowing into neighbouring fields; if it still doesn't fit at the minimum size it is truncated
+             with a trailing "..." instead of being left to spill over the box's edges. Pass
+             <paramref name="autoFit"/> = false to opt out (e.g. for fields where the original fixed size must
+             be preserved verbatim, such as printed monetary amounts).
+             </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.Memo(System.Double,System.Double,System.Double,System.Collections.Generic.IEnumerable{System.String},DacteNet.Rendering.Primitives.DacteFont,DacteNet.Rendering.Primitives.TextAlign,System.Nullable{DacteNet.Rendering.Primitives.PdfColor},System.Double,System.Boolean)">
             <summary>
-            Draws a single line of text inside the given band-relative box, top-anchored (like the original
-            Delphi <c>TRLLabel</c>/<c>TRLMemo</c> controls this mirrors: their box height is typically just
-            slightly taller than one text line, for visual padding, not meant to vertically center text in a
-            much-taller box - a handful of DACTE fields use noticeably tall boxes, e.g. the 19-raw-unit-tall
-            municipality box in rlb_03_DadosDACTe, and centering there visibly collided with the row below).
+            Draws several lines of left-anchored text starting at the box's top, one under another (TRLMemo
+            equivalent). Each entry in <paramref name="lines"/> is treated as a logical paragraph/row and is
+            word-wrapped to fit <paramref name="widthRl"/> before being drawn, so a single long value (a long
+            observação, an unusually long razão social, etc.) grows downward into extra physical lines instead
+            of overflowing sideways past the box's right edge. Pass <paramref name="wrap"/> = false to restore
+            the previous one-input-line-per-output-line behaviour for callers that already pre-wrap their text
+            or that rely on fixed columns (e.g. right-aligned numeric columns) not reflowing.
             </summary>
         </member>
-        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.Memo(System.Double,System.Double,System.Double,System.Collections.Generic.IEnumerable{System.String},DacteNet.Rendering.Primitives.DacteFont,DacteNet.Rendering.Primitives.TextAlign,System.Nullable{DacteNet.Rendering.Primitives.PdfColor},System.Double)">
-            <summary>Draws several lines of left-anchored text starting at the box's top, one under another (TRLMemo equivalent).</summary>
+        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.CountWrappedLines(System.String,System.Double,DacteNet.Rendering.Primitives.DacteFont,System.Int32)">
+            <summary>
+            How many lines <paramref name="text"/> would take if drawn with <see cref="M:DacteNet.Rendering.Primitives.ReportCanvas.TextWrapped(System.Double,System.Double,System.Double,System.Double,System.String,DacteNet.Rendering.Primitives.DacteFont,DacteNet.Rendering.Primitives.TextAlign,System.Nullable{DacteNet.Rendering.Primitives.PdfColor},System.Int32)"/> at this
+            width/font, capped at <paramref name="maxLines"/>. Empty/null text counts as 1 (a field with no
+            value still reserves its normal single-line row - it just doesn't grow). Callers use this to decide
+            how much extra vertical space a row needs *before* drawing anything in it (e.g. when two side-by-side
+            fields, like Remetente/Destinatário, must stay row-aligned and so need the same extra space applied
+            to whichever one wrapped more).
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.TextWrapped(System.Double,System.Double,System.Double,System.Double,System.String,DacteNet.Rendering.Primitives.DacteFont,DacteNet.Rendering.Primitives.TextAlign,System.Nullable{DacteNet.Rendering.Primitives.PdfColor},System.Int32)">
+            <summary>
+            Draws up to <paramref name="maxLines"/> lines of word-wrapped text at the font's *original* size -
+            unlike <see cref="M:DacteNet.Rendering.Primitives.ReportCanvas.Text(System.Double,System.Double,System.Double,System.Double,System.String,DacteNet.Rendering.Primitives.DacteFont,DacteNet.Rendering.Primitives.TextAlign,System.Nullable{DacteNet.Rendering.Primitives.PdfColor},System.Boolean)"/>'s auto-fit, this never shrinks the font to make text fit; instead it grows
+            downward into extra lines. Meant for fields like razão social / endereço where shrinking the font
+            looks inconsistent next to the rest of the (fixed-size) form, and the caller has already made room
+            for the extra line(s) - see <see cref="M:DacteNet.Rendering.Primitives.ReportCanvas.CountWrappedLines(System.String,System.Double,DacteNet.Rendering.Primitives.DacteFont,System.Int32)"/>. Returns how many lines were drawn.
+            </summary>
         </member>
         <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.Barcode128(System.Double,System.Double,System.Double,System.Double,System.String)">
             <summary>Renders a Code128 barcode (Code Set C, i.e. two decimal digits per symbol - the digitsOnly string must have even length) into the given box.</summary>

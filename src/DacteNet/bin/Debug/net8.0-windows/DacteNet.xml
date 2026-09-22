@@ -290,6 +290,15 @@
             spaces, all of which show up in real CT-e XML free-text fields (observações, razão social, endereço).
             </summary>
         </member>
+        <member name="M:DacteNet.Rendering.Primitives.AfmWidths.WordWrap(DacteNet.Rendering.Primitives.PdfStandardFont,System.String,System.Double,System.Double,System.Int32)">
+            <summary>
+            Same as <see cref="M:DacteNet.Rendering.Primitives.AfmWidths.WordWrap(DacteNet.Rendering.Primitives.PdfStandardFont,System.String,System.Double,System.Double)"/> but caps the result at
+            <paramref name="maxLines"/> lines - if the text needs more than that, everything past the first
+            <paramref name="maxLines"/> - 1 lines is folded back together and ellipsis-truncated onto the last
+            line, so a pathologically long value still only ever occupies a bounded, predictable amount of
+            vertical space (used by fixed-form boxes that can open up to one extra line, but no more).
+            </summary>
+        </member>
         <member name="M:DacteNet.Rendering.Primitives.AfmWidths.TruncateWithEllipsis(DacteNet.Rendering.Primitives.PdfStandardFont,System.String,System.Double,System.Double)">
             <summary>
             Truncates <paramref name="text"/> with a trailing "..." so it fits within <paramref name="maxWidthPt"/>,
@@ -417,6 +426,25 @@
             of overflowing sideways past the box's right edge. Pass <paramref name="wrap"/> = false to restore
             the previous one-input-line-per-output-line behaviour for callers that already pre-wrap their text
             or that rely on fixed columns (e.g. right-aligned numeric columns) not reflowing.
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.CountWrappedLines(System.String,System.Double,DacteNet.Rendering.Primitives.DacteFont,System.Int32)">
+            <summary>
+            How many lines <paramref name="text"/> would take if drawn with <see cref="M:DacteNet.Rendering.Primitives.ReportCanvas.TextWrapped(System.Double,System.Double,System.Double,System.Double,System.String,DacteNet.Rendering.Primitives.DacteFont,DacteNet.Rendering.Primitives.TextAlign,System.Nullable{DacteNet.Rendering.Primitives.PdfColor},System.Int32)"/> at this
+            width/font, capped at <paramref name="maxLines"/>. Empty/null text counts as 1 (a field with no
+            value still reserves its normal single-line row - it just doesn't grow). Callers use this to decide
+            how much extra vertical space a row needs *before* drawing anything in it (e.g. when two side-by-side
+            fields, like Remetente/Destinatário, must stay row-aligned and so need the same extra space applied
+            to whichever one wrapped more).
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.TextWrapped(System.Double,System.Double,System.Double,System.Double,System.String,DacteNet.Rendering.Primitives.DacteFont,DacteNet.Rendering.Primitives.TextAlign,System.Nullable{DacteNet.Rendering.Primitives.PdfColor},System.Int32)">
+            <summary>
+            Draws up to <paramref name="maxLines"/> lines of word-wrapped text at the font's *original* size -
+            unlike <see cref="M:DacteNet.Rendering.Primitives.ReportCanvas.Text(System.Double,System.Double,System.Double,System.Double,System.String,DacteNet.Rendering.Primitives.DacteFont,DacteNet.Rendering.Primitives.TextAlign,System.Nullable{DacteNet.Rendering.Primitives.PdfColor},System.Boolean)"/>'s auto-fit, this never shrinks the font to make text fit; instead it grows
+            downward into extra lines. Meant for fields like razão social / endereço where shrinking the font
+            looks inconsistent next to the rest of the (fixed-size) form, and the caller has already made room
+            for the extra line(s) - see <see cref="M:DacteNet.Rendering.Primitives.ReportCanvas.CountWrappedLines(System.String,System.Double,DacteNet.Rendering.Primitives.DacteFont,System.Int32)"/>. Returns how many lines were drawn.
             </summary>
         </member>
         <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.Barcode128(System.Double,System.Double,System.Double,System.Double,System.String)">

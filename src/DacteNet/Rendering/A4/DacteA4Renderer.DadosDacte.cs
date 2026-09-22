@@ -107,8 +107,8 @@ public sealed partial class DacteA4Renderer
 
         // Expedidor / Recebedor -------------------------------------------------------------------
         double yNome2 = 111 + extraTop;
-        double yEndereco2 = 119 + extraTop + (nomeLinesMid - 1) * pitch;
-        double yMunicipio2 = 135 + extraTop + extraMid;
+        double yEndereco2 = 122 + extraTop + (nomeLinesMid - 1) * pitch;
+        double yMunicipio2 = 133 + extraTop + extraMid;
         double yCnpj2 = 144 + extraTop + extraMid;
         double yFone2 = 153 + extraTop + extraMid;
 
