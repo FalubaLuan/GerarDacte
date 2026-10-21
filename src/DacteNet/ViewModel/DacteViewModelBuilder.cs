@@ -638,6 +638,14 @@ public static class DacteViewModelBuilder
     // Documentos originários (Itens/cdsDocumentos, retrato_layout.md §7)
     // ------------------------------------------------------------------
 
+    private static string ParseNumNotaFromChave(string chave)
+    {
+        if (string.IsNullOrWhiteSpace(chave) || chave.Length != 44)
+            return "000.000.000";
+
+        string numero = chave.Substring(25, 9);
+        return $"{numero[..3]}.{numero[3..6]}.{numero[6..9]}";
+    }
     private static void BuildDocumentosOriginarios(DacteViewModel vm, InfoCTeNormal? infNormal, bool isOS)
     {
         if (infNormal is null || isOS) return; // rlb_07_HeaderItens is disabled outright for modelo 67
@@ -648,10 +656,10 @@ public static class DacteViewModelBuilder
         var itens = new List<(string Tipo, string Cnpj, string Documento)>();
 
         foreach (var nf in doc.NotasFiscais)
-            itens.Add(("NF", numNota, $"{nf.Serie}-{nf.Numero}"));
+            itens.Add(("NF", nf.Numero!, $"{nf.Serie}-{nf.Numero}"));
 
         foreach (var nfe in doc.NotasFiscaisEletronicas)
-            itens.Add(("NF-e", numNota, Format.ChaveAcesso(nfe.Chave)));
+            itens.Add(("NF-e", ParseNumNotaFromChave(nfe.Chave!), Format.ChaveAcesso(nfe.Chave)));
 
         foreach (var outro in doc.Outros)
             itens.Add((TipoDocumentoOutrosTexto(outro.Tipo), numNota, outro.Numero ?? outro.DescricaoOutros ?? ""));

@@ -357,6 +357,14 @@
         <member name="M:DacteNet.Rendering.Primitives.PdfPage.DrawText(System.Double,System.Double,System.String,DacteNet.Rendering.Primitives.PdfStandardFont,System.Double,DacteNet.Rendering.Primitives.PdfColor)">
             <summary>Draws a single line of left-anchored text with its baseline at (x,y).</summary>
         </member>
+        <member name="M:DacteNet.Rendering.Primitives.PdfPage.DrawTextRotated(System.Double,System.Double,System.String,DacteNet.Rendering.Primitives.PdfStandardFont,System.Double,DacteNet.Rendering.Primitives.PdfColor,System.Double)">
+            <summary>
+            Draws a single line of left-anchored text whose baseline starts at (x,y) and is rotated
+            counter-clockwise by <paramref name="angleDegrees"/> around that point - used for the large
+            diagonal "stamp" watermark (SEM VALOR FISCAL / CANCELADO / etc.), which unlike every other text
+            on the page isn't meant to sit inside a band's normal horizontal flow.
+            </summary>
+        </member>
         <member name="M:DacteNet.Rendering.Primitives.PdfPage.DrawImage(DacteNet.Rendering.Primitives.PdfImage,System.Double,System.Double,System.Double,System.Double)">
             <summary>Draws a JPEG image (DCTDecode passthrough - see <see cref="T:DacteNet.Rendering.Primitives.PdfImage"/>) into the given box, bottom-left corner (x,y).</summary>
         </member>
@@ -445,6 +453,16 @@
             downward into extra lines. Meant for fields like razão social / endereço where shrinking the font
             looks inconsistent next to the rest of the (fixed-size) form, and the caller has already made room
             for the extra line(s) - see <see cref="M:DacteNet.Rendering.Primitives.ReportCanvas.CountWrappedLines(System.String,System.Double,DacteNet.Rendering.Primitives.DacteFont,System.Int32)"/>. Returns how many lines were drawn.
+            </summary>
+        </member>
+        <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.Watermark(System.String,DacteNet.Rendering.Primitives.DacteFont,DacteNet.Rendering.Primitives.PdfColor,System.Double)">
+            <summary>
+            Draws <paramref name="text"/> once, huge and diagonal, dead-centered on the *physical page*
+            (not the current band) - like a big rubber stamp over the whole DACTE, rather than a small note
+            tucked inside the observações box. Positioned/sized in points, not raw band units, since it has
+            nothing to do with the band layout: <paramref name="font"/>'s size is the caller's preferred size,
+            auto-shrunk only if the text would otherwise spill past the page. Should be drawn before any band
+            content so real text/lines stay layered on top and legible.
             </summary>
         </member>
         <member name="M:DacteNet.Rendering.Primitives.ReportCanvas.Barcode128(System.Double,System.Double,System.Double,System.Double,System.String)">

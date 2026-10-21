@@ -15,7 +15,7 @@ string outputPath = args.Length > 1 ? args[1] : "dacte.pdf";
 string xml = File.ReadAllText(xmlPath);
 
 // 1) Simplest possible call: parse the CT-e XML and write an A4 DACTE PDF next to it.
-new Dacte().GerarPdf(xml, outputPath);
+new Dacte(new DacteOptions(){Cancelada = true}).GerarPdf(xml, outputPath);
 Console.WriteLine($"A4 DACTE written to {Path.GetFullPath(outputPath)}");
 
 // 2) The same document, rendered as the compact A5 "retrato simplificado" layout instead, with a
@@ -41,7 +41,7 @@ static string FindDefaultSampleXml()
     var dir = new DirectoryInfo(AppContext.BaseDirectory);
     for (int i = 0; i < 8 && dir is not null; i++)
     {
-        var candidate = Path.Combine(dir.FullName, "testdata", "35260810992167004631570010001403871063599019.xml");
+        var candidate = Path.Combine(dir.FullName, "testdata", "35260904895882000151570050001788021001038648.xml");
         if (File.Exists(candidate)) return candidate;
         dir = dir.Parent;
     }

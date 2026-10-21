@@ -195,6 +195,46 @@ public sealed class ReportCanvas
         return lines.Count;
     }
 
+    /// <summary>
+    /// Draws <paramref name="text"/> once, huge and diagonal, dead-centered on the *physical page*
+    /// (not the current band) - like a big rubber stamp over the whole DACTE, rather than a small note
+    /// tucked inside the observações box. Positioned/sized in points, not raw band units, since it has
+    /// nothing to do with the band layout: <paramref name="font"/>'s size is the caller's preferred size,
+    /// auto-shrunk only if the text would otherwise spill past the page. Should be drawn before any band
+    /// content so real text/lines stay layered on top and legible.
+    /// </summary>
+    public void Watermark(string text, DacteFont font, PdfColor color, double angleDegrees = 35)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+        var angleRad = angleDegrees * Math.PI / 180.0;
+        var cos = Math.Cos(angleRad);
+        var sin = Math.Sin(angleRad);
+        const double capHeightFactor = 0.7;
+
+        // Auto-fit: font.SizePt is the caller's *preferred* (large) size for a short status word - shrink
+        // it, only if needed, so a longer status phrase's rotated bounding box still stays within the
+        // page. This is a single stamp-like line, not a wrapped paragraph, so it must never spill past
+        // the page edges regardless of how long the underlying status text turns out to be.
+        var unitWidthPt = AfmWidths.MeasureWidthPt(font.Font, text, 1.0);
+        var absCos = Math.Abs(cos);
+        var absSin = Math.Abs(sin);
+        var maxByWidth = unitWidthPt <= 0 ? double.MaxValue : (_pageWidthPt * 0.92) / (unitWidthPt * absCos + capHeightFactor * absSin);
+        var maxByHeight = (_pageHeightPt * 0.92) / (unitWidthPt * absSin + capHeightFactor * absCos);
+        var sizePt = Math.Min(font.SizePt, Math.Min(maxByWidth, maxByHeight));
+
+        // Pivot the text about the page's physical center, then walk back half its (rotated) width and
+        // roughly half a cap-height so the glyphs themselves - not just their nominal origin - end up centered.
+        var textWidthPt = unitWidthPt * sizePt;
+        var halfWidth = textWidthPt / 2.0;
+        var halfHeight = sizePt * capHeightFactor / 2.0;
+        var centerX = _pageWidthPt / 2.0;
+        var centerY = _pageHeightPt / 2.0;
+        var x = centerX - (halfWidth * cos - halfHeight * sin);
+        var y = centerY - (halfWidth * sin + halfHeight * cos);
+
+        Page.DrawTextRotated(x, y, text, font.Font, sizePt, color, angleDegrees);
+    }
+
     public void Line(double x1Rl, double y1Rl, double x2Rl, double y2Rl, double lineWidthPt = 0.75, PdfColor? color = null)
     {
         Page.StrokeLine(AbsXPt(x1Rl), ToPdfY(AbsYTopDownPt(y1Rl)), AbsXPt(x2Rl), ToPdfY(AbsYTopDownPt(y2Rl)),

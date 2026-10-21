@@ -71,6 +71,29 @@ public sealed class PdfPage
         _content.Append(") Tj ET\n");
     }
 
+    /// <summary>
+    /// Draws a single line of left-anchored text whose baseline starts at (x,y) and is rotated
+    /// counter-clockwise by <paramref name="angleDegrees"/> around that point - used for the large
+    /// diagonal "stamp" watermark (SEM VALOR FISCAL / CANCELADO / etc.), which unlike every other text
+    /// on the page isn't meant to sit inside a band's normal horizontal flow.
+    /// </summary>
+    public void DrawTextRotated(double x, double y, string text, PdfStandardFont font, double sizePt, PdfColor color, double angleDegrees)
+    {
+        if (string.IsNullOrEmpty(text)) return;
+        UsedFonts.Add(font);
+        var bytes = WinAnsiEncoding.ToPdfLiteralBytes(text);
+        var angleRad = angleDegrees * Math.PI / 180.0;
+        var cos = Math.Cos(angleRad);
+        var sin = Math.Sin(angleRad);
+
+        _content.Append(F(color.R)).Append(' ').Append(F(color.G)).Append(' ').Append(F(color.B)).Append(" rg\n");
+        _content.Append("BT /").Append(font.ResourceName()).Append(' ').Append(F(sizePt)).Append(" Tf ")
+                .Append(F(cos)).Append(' ').Append(F(sin)).Append(' ').Append(F(-sin)).Append(' ').Append(F(cos))
+                .Append(' ').Append(F(x)).Append(' ').Append(F(y)).Append(" Tm (");
+        AppendRawBytesAsLatin1(_content, bytes);
+        _content.Append(") Tj ET\n");
+    }
+
     // The content stream is emitted as a Latin-1 string and re-encoded to raw bytes at Save() time
     // (see PdfDocument.Save), so every byte 0x00-0xFF we append here must round-trip through Latin-1
     // untouched - Latin-1 maps code point N to byte N for the full 0-255 range, which is exactly what we need.

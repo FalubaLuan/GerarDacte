@@ -45,6 +45,12 @@ public sealed partial class DacteA4Renderer
         var canvas = new ReportCanvas(doc, Layout.PtFromMm(PageWidthMm), Layout.PtFromMm(PageHeightMm),
             marginPt, marginPt, marginPt, marginPt);
 
+        // Drawn first (i.e. behind every band's borders/lines/text, since later content-stream drawing
+        // always layers on top) and in absolute page coordinates rather than a band's - a stamp-style
+        // watermark belongs to the physical page as a whole, not to whichever band happens to be current.
+        if (!string.IsNullOrWhiteSpace(vm.MensagemStatus))
+            canvas.Watermark(vm.MensagemStatus!, F(90, true), PdfColor.Gray);
+
         RenderDivisaoRecibo(canvas);
         RenderRecibo(canvas, vm);
         RenderCabecalho(canvas, vm);

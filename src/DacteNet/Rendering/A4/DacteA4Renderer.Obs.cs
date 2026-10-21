@@ -34,16 +34,21 @@ public sealed partial class DacteA4Renderer
     private static void RenderObservacoes(ReportCanvas canvas, DacteViewModel vm)
     {
         var linhas = vm.LinhasObservacoes;
-        double obsHeight = Math.Max(linhas.Count, 4) * 8 + 5;
+        const double obsWidth = 730, obsLineHeight = 12;
+        var fObs = F(6);
+        // Each entry in LinhasObservacoes is only split on explicit newlines in the source XML - a long
+        // one can still word-wrap into several physical lines inside the 730-wide box. Count those real
+        // wrapped lines (matching the lineHeightRl the Memo call below actually uses) instead of just
+        // linhas.Count, or the box was sized for far fewer lines than get drawn and the text overflowed
+        // past its own border into whatever band came next.
+        int totalLines = linhas.Sum(l => canvas.CountWrappedLines(l, obsWidth, fObs, maxLines: int.MaxValue));
+        double obsHeight = Math.Max(totalLines, 4) * obsLineHeight + 5;
         double h = Math.Max(obsHeight + 25, 68);
         EnsureSpace(canvas, h);
         canvas.Rect(0, 0, 741, h);
         canvas.Text(6, 4, 732, 13, "OBSERVAÇÕES", F(6.75), TextAlign.Center);
         canvas.Line(1, 18, 741, 18, 0.5);
-        canvas.Memo(5, 19, 730, linhas, F(6));
-
-        if (!string.IsNullOrWhiteSpace(vm.MensagemStatus))
-            canvas.Text(50, 29, 640, 26, vm.MensagemStatus, F(18, true), TextAlign.Center, PdfColor.Gray);
+        canvas.Memo(5, 19, obsWidth, linhas, fObs, lineHeightRl: obsLineHeight);
 
         canvas.AdvanceBand(h);
     }
@@ -54,9 +59,23 @@ public sealed partial class DacteA4Renderer
     private static void RenderDadosExcEmitente(ReportCanvas canvas, DacteViewModel vm)
     {
         bool hasContent = vm.ObservacoesContribuinte.Count > 0 || vm.ObservacoesFisco.Count > 0;
-        double bodyHeight = hasContent
-            ? Math.Max(vm.ObservacoesContribuinte.Count, vm.ObservacoesFisco.Count) * 8 + 20
-            : 49;
+        const double contribuinteWidth = 492, fiscoWidth = 228, lineHeight = 12;
+        var fBody = F(6.75);
+        double bodyHeight;
+        if (hasContent)
+        {
+            // Same fix as RenderObservacoes: size the box to the real word-wrapped line count (at the
+            // lineHeightRl the Memo calls below actually use), not just the raw entry count - a long
+            // "uso exclusivo do emissor"/fisco note wraps into several physical lines inside its column,
+            // and the box needs to grow to whichever column (contribuinte or fisco) ends up taller.
+            int contribuinteLines = vm.ObservacoesContribuinte.Sum(l => canvas.CountWrappedLines(l, contribuinteWidth, fBody, maxLines: int.MaxValue));
+            int fiscoLines = vm.ObservacoesFisco.Sum(l => canvas.CountWrappedLines(l, fiscoWidth, fBody, maxLines: int.MaxValue));
+            bodyHeight = Math.Max(contribuinteLines, fiscoLines) * lineHeight + 20;
+        }
+        else
+        {
+            bodyHeight = 49;
+        }
         double h = 17 + bodyHeight;
         EnsureSpace(canvas, h);
         canvas.Rect(0, 0, 741, h);
@@ -64,8 +83,8 @@ public sealed partial class DacteA4Renderer
         canvas.Text(566, 4, 102, 12, "RESERVADO AO FISCO", F(6.75));
         canvas.Line(1, 15, 741, 15, 0.5);
         canvas.Line(500, 1, 500, h - 1, 0.5);
-        canvas.Memo(5, 17, 492, vm.ObservacoesContribuinte, F(6.75));
-        canvas.Memo(509, 17, 228, vm.ObservacoesFisco, F(6.75));
+        canvas.Memo(5, 17, contribuinteWidth, vm.ObservacoesContribuinte, fBody, lineHeightRl: lineHeight);
+        canvas.Memo(509, 17, fiscoWidth, vm.ObservacoesFisco, fBody, lineHeightRl: lineHeight);
 
         canvas.AdvanceBand(h);
     }
