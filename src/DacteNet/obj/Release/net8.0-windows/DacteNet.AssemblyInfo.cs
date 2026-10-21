@@ -16,11 +16,11 @@ using System.Reflection;
     "ecimento de Transporte Eletrônico) PDF from a CT-e XML document, modeled on the " +
     "layout and business rules of the ACBrCTe Delphi component. No third-party NuGet " +
     "dependencies."))]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.10.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.10+ca4634c0b820d4425a92bb96483399c8256e1018")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.11.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.11+3928e9fae65d8aaa6ee9d1e13e0eae771f1cb687")]
 [assembly: System.Reflection.AssemblyProductAttribute("DacteNet")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DacteNet")]
-[assembly: System.Reflection.AssemblyVersionAttribute("1.0.10.0")]
+[assembly: System.Reflection.AssemblyVersionAttribute("1.0.11.0")]
 [assembly: System.Runtime.Versioning.TargetPlatformAttribute("Windows7.0")]
 [assembly: System.Runtime.Versioning.SupportedOSPlatformAttribute("Windows7.0")]
 
